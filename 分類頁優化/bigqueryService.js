@@ -6,7 +6,6 @@ const bigquery = new BigQuery();
 
 
 
-
 /**
  * 執行 BigQuery 查詢
  * @param {string} query - SQL 查詢語句
@@ -21,9 +20,6 @@ async function executeQuery(query) {
         return [];
     }
 }
-
-
-
 
 
 
@@ -46,54 +42,64 @@ function formatSkusForQuery(products) {
 
 
 
-
 /**
- * 獲取產品詳細信息
+ * 獲取產品詳細信息（批次處理）
  * @param {Array<Object>} products - 產品物件數組
- * @returns {Promise<Object>} - 最終結果物件
+ * @returns {Promise<Array<Object>>} - 最終結果物件
  */
 async function fetchProductDetails(products) {
-    const skuString = formatSkusForQuery(products);
-    const query = `
-        SELECT 
-            p.sku,
-            ps.qty_snapshot_sales_all          AS  mrl_sap_available_qty,
-            ps.U_item_status_value             AS  mrl_sap_status,
-            pq.total_sales                     AS  mrl_sap_cumulative_qty,
-            pq.U_space_cat_value               AS  mrl_sap_subcategory,
-            pq.U_item_c3_value                 AS  mrl_sap_space,
-            pd.U_mrl_eta_list                  AS  mrl_sap_expected_start_date,
-            pd.OpenQty_list                    AS  mrl_sap_purchase_qty
-        FROM (SELECT DISTINCT sku FROM UNNEST([${skuString}]) AS sku) AS p
-        LEFT JOIN (
-            SELECT
-                itemCode,
-                qty_snapshot_sales_all,
-                U_item_status_value
-            FROM Unima_Prod.appropriation_qty
-            WHERE itemCode IN (${skuString})
-        ) AS ps ON p.sku = ps.itemCode
-        LEFT JOIN (
-            SELECT
-                product_id,
-                SUM(quantity) AS total_sales,
-                U_space_cat_value,
-                U_item_c3_value
-            FROM Unima_Prod.order_return_details
-            WHERE product_id IN (${skuString})
-            GROUP BY product_id, U_space_cat_value, U_item_c3_value
-        ) AS pq ON p.sku = pq.product_id
-        LEFT JOIN (
-            SELECT
-                ItemCode,
-                ARRAY_AGG(U_mrl_eta) AS U_mrl_eta_list,
-                ARRAY_AGG(OpenQty) AS OpenQty_list
-            FROM mid_Prod.midOPOR_POR1
-            WHERE ItemCode IN (${skuString})
-            GROUP BY ItemCode
-        ) AS pd ON p.sku = pd.ItemCode
-    `;
-    return executeQuery(query);
+    const BATCH_SIZE = 200;
+    let allResults = [];
+
+    // 將產品分批
+    for (let i = 0; i < products.length; i += BATCH_SIZE) {
+        const batch = products.slice(i, i + BATCH_SIZE);
+        const skuString = formatSkusForQuery(batch);
+        const query = `
+            SELECT 
+                p.sku,
+                ps.qty_snapshot_sales_all          AS  mrl_sap_available_qty,
+                ps.U_item_status_value             AS  mrl_sap_status,
+                pq.total_sales                     AS  mrl_sap_cumulative_qty,
+                pq.U_space_cat_value               AS  mrl_sap_space,
+                pq.U_item_c3_value                 AS  mrl_sap_subcategory,
+                pd.U_mrl_eta_list                  AS  mrl_sap_expected_start_date,
+                pd.OpenQty_list                    AS  mrl_sap_purchase_qty
+            FROM (SELECT DISTINCT sku FROM UNNEST([${skuString}]) AS sku) AS p
+            LEFT JOIN (
+                SELECT
+                    itemCode,
+                    qty_snapshot_sales_all,
+                    U_item_status_value
+                FROM Unima_Prod.appropriation_qty
+                WHERE itemCode IN (${skuString})
+            ) AS ps ON p.sku = ps.itemCode
+            LEFT JOIN (
+                SELECT
+                    product_id,
+                    SUM(quantity) AS total_sales,
+                    U_space_cat_value,
+                    U_item_c3_value
+                FROM Unima_Prod.order_return_details
+                WHERE product_id IN (${skuString})
+                GROUP BY product_id, U_space_cat_value, U_item_c3_value
+            ) AS pq ON p.sku = pq.product_id
+            LEFT JOIN (
+                SELECT
+                    ItemCode,
+                    ARRAY_AGG(FORMAT_TIMESTAMP('%Y-%m-%d', U_mrl_eta) IGNORE NULLS) AS U_mrl_eta_list,
+                    ARRAY_AGG(OpenQty IGNORE NULLS) AS OpenQty_list
+                FROM mid_Prod.midOPOR_POR1
+                WHERE ItemCode IN (${skuString})
+                GROUP BY ItemCode
+            ) AS pd ON p.sku = pd.ItemCode
+        `;
+
+        const batchResults = await executeQuery(query);
+        allResults = allResults.concat(batchResults);
+    }
+
+    return allResults;
 }
 
 module.exports = { fetchProductDetails };

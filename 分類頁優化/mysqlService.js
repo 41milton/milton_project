@@ -34,7 +34,7 @@ async function executeQuery(query, params = []) {
 
 // 獲取產品數據
 async function getProductData() {
-    const query = `SELECT entity_id, sku FROM catalog_product_entity limit 100`;
+    const query = `SELECT entity_id, sku FROM catalog_product_entity`;
     return executeQuery(query);
 }
 
@@ -57,6 +57,17 @@ async function getAttributeId(attributeCodeList) {
 
 
 
+//獲取 現貨/預購 的option id
+async function getStockAndPreorderOptionIds(){
+    const query = `
+        SELECT option_id , value
+        FROM eav_attribute_option_value
+        WHERE (value = '現貨家具' OR value = '預購家具')
+        AND store_id = 1;
+    `;
+    return executeQuery(query);
+}
+
 
 
 
@@ -77,6 +88,13 @@ async function updateProductDataTypeInt(data){
     return await updateProductAttributesInTable(data,'catalog_product_entity_int');
 }
 
+
+
+
+// 更新產品數據 type text
+async function updateProductDataTypeText(data){
+    return await updateProductAttributesInTable(data,'catalog_product_entity_text');
+}
 
 
 
@@ -107,4 +125,4 @@ async function updateProductAttributesInTable(data, table) {
 }
 
 
-module.exports = { getProductData, getAttributeId, updateProductDataTypeVarchar , updateProductDataTypeInt };
+module.exports = { getProductData , getAttributeId , updateProductDataTypeVarchar , updateProductDataTypeInt , updateProductDataTypeText , getStockAndPreorderOptionIds };

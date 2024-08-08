@@ -1,4 +1,4 @@
-const { getAttributeId } = require('./mysqlService');
+const { getAttributeId , getStockAndPreorderOptionIds } = require('./mysqlService');
 const Big = require('big.js');
 
 
@@ -20,7 +20,7 @@ async function processProductData(products,productDetails) {
 
 
 /**
- * 合併產品數據和產品詳細數據
+ * 合併產品entity_id和產品詳細數據
  * @param {Array<Object>} productList - 產品數據數組
  * @param {Array<Object>} detailedProductList - 產品詳細數據數組
  * @returns {Array<Object>} - 合併後的產品詳細數據數組
@@ -78,9 +78,19 @@ function getSafetyStock(){
 async function formatDataForInsertion(products, attributeMapping) {
     const productDataTypeVarchar = [];
     const productDataTypeInt = [];
-    const [MRLpreorderAttributeId] = await getAttributeId(['MRL_filters_preorder']);
+    const productDataTypeText = [];
+
     const safetyStock = getSafetyStock(); //安全庫存
 
+
+    const [MRLpreorderAttributeId] = await getAttributeId(['MRL_filters_preorder']); //現貨/預購 attribute id
+    const stockAndPreorderOptionIds = await getStockAndPreorderOptionIds();
+    const stockOptionId = (stockAndPreorderOptionIds.find(option => option.value === '現貨家具') || {}).option_id || ''; //現貨家具option id
+    const preorderOptionId = (stockAndPreorderOptionIds.find(option => option.value === '預購家具') || {}).option_id || ''; //預購家具option id
+
+
+    
+    
     products.forEach(product => {
         // 轉換產品的各個屬性
         Object.keys(product).forEach(key => {
@@ -92,6 +102,22 @@ async function formatDataForInsertion(products, attributeMapping) {
                     const attributeType = attribute.backend_type;
 
                     let value;
+
+
+                    // 計算預期進貨量的餘數
+                    if (key === 'mrl_sap_purchase_qty' && Array.isArray(product[key])) {
+                        let remainder = parseInt(product['mrl_sap_available_qty'], 10); // 可銷售數
+                    
+                        product[key] = product[key].map(purchaseQty => {
+                            remainder += parseInt(purchaseQty, 10);                            
+                            return remainder > 0 
+                                ? `${purchaseQty}(餘${remainder})`
+                                : `${purchaseQty}(餘0)`;
+                        });
+                    }
+
+
+
 
                     if (Array.isArray(product[key])) {
                         // 如果值是對象數組，提取 value 屬性並轉換為純字符串數組
@@ -106,6 +132,21 @@ async function formatDataForInsertion(products, attributeMapping) {
                     } else {
                         value = product[key];
                     }
+
+
+
+
+                    //計算預購or現貨
+                    if (key === 'mrl_sap_available_qty') {
+                        let preorderValue = parseFloat(value) + safetyStock > 0 ? stockOptionId : preorderOptionId;
+                        productDataTypeInt.push({
+                            entity_id: product.entity_id,
+                            attribute_id: MRLpreorderAttributeId.attribute_id,
+                            value: preorderValue
+                        });
+                    }
+
+
 
 
                     // 處理 Big 類型數據
@@ -127,13 +168,11 @@ async function formatDataForInsertion(products, attributeMapping) {
                             value: value
                         });
                     }
-
-                    if (key === 'mrl_sap_available_qty') {
-                        let preorderValue = parseFloat(value) + safetyStock > 0 ? '134' : '135'; //(待修改)
-                        productDataTypeInt.push({
+                    else if(attributeType == 'text'){
+                        productDataTypeText.push({
                             entity_id: product.entity_id,
-                            attribute_id: MRLpreorderAttributeId.attribute_id,
-                            value: preorderValue
+                            attribute_id: attributeId,
+                            value: value
                         });
                     }
                 }
@@ -141,7 +180,7 @@ async function formatDataForInsertion(products, attributeMapping) {
         });
     });
 
-    return { productDataTypeVarchar , productDataTypeInt };
+    return { productDataTypeVarchar , productDataTypeInt , productDataTypeText };
 }
 
 module.exports = { processProductData };
