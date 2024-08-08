@@ -107,12 +107,14 @@ async function formatDataForInsertion(products, attributeMapping) {
                     // 計算預期進貨量的餘數
                     if (key === 'mrl_sap_purchase_qty' && Array.isArray(product[key])) {
                         let remainder = parseInt(product['mrl_sap_available_qty'], 10); // 可銷售數
-                    
+
                         product[key] = product[key].map(purchaseQty => {
-                            remainder += parseInt(purchaseQty, 10);                            
-                            return remainder > 0 
-                                ? `${purchaseQty}(餘${remainder})`
-                                : `${purchaseQty}(餘0)`;
+                            remainder += parseInt(purchaseQty, 10);
+
+                            return {
+                                purchaseQty: purchaseQty,
+                                remainder: remainder > 0 ? remainder : 0
+                            };
                         });
                     }
 
