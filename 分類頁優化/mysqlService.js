@@ -8,11 +8,15 @@ const mysqlConfig = {
 };
 
 
+
+
+
+
 // 執行 MySQL 動作
 async function executeQuery(query, params = []) {
     const connection = mysql.createConnection(mysqlConfig);
     connection.connect();
-    
+
     try {
         return await new Promise((resolve, reject) => {
             connection.query(query, params, (err, results) => {
@@ -27,6 +31,8 @@ async function executeQuery(query, params = []) {
         connection.end();
     }
 }
+
+
 
 
 
@@ -57,7 +63,11 @@ async function getAttributeId(attributeCodeList) {
 
 
 
-//獲取 現貨/預購 的option id
+
+
+
+
+// 獲取現貨/預購的 option id
 async function getStockAndPreorderOptionIds(){
     const query = `
         SELECT option_id , value
@@ -74,9 +84,27 @@ async function getStockAndPreorderOptionIds(){
 
 
 
+
+// 更新產品數據
+async function updateProductDataType(data, table) {
+    const BATCH_SIZE = 500;
+    const batches = Math.ceil(data.length / BATCH_SIZE);
+
+    for (let i = 0; i < batches; i++) {
+        const batch = data.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
+        await updateProductAttributesInTable(batch, table);
+    }
+}
+
+
+
+
+
+
+
 // 更新產品數據 type varchar
 async function updateProductDataTypeVarchar(data) {
-    return await updateProductAttributesInTable(data,'catalog_product_entity_varchar');
+    return updateProductDataType(data, 'catalog_product_entity_varchar');
 }
 
 
@@ -84,18 +112,18 @@ async function updateProductDataTypeVarchar(data) {
 
 
 // 更新產品數據 type int
-async function updateProductDataTypeInt(data){
-    return await updateProductAttributesInTable(data,'catalog_product_entity_int');
+async function updateProductDataTypeInt(data) {
+    return updateProductDataType(data, 'catalog_product_entity_int');
 }
+
 
 
 
 
 // 更新產品數據 type text
-async function updateProductDataTypeText(data){
-    return await updateProductAttributesInTable(data,'catalog_product_entity_text');
+async function updateProductDataTypeText(data) {
+    return updateProductDataType(data, 'catalog_product_entity_text');
 }
-
 
 
 
@@ -125,4 +153,9 @@ async function updateProductAttributesInTable(data, table) {
 }
 
 
+
+
+
+
 module.exports = { getProductData , getAttributeId , updateProductDataTypeVarchar , updateProductDataTypeInt , updateProductDataTypeText , getStockAndPreorderOptionIds };
+
