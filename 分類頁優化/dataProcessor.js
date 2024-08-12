@@ -85,9 +85,11 @@ async function formatDataForInsertion(products, attributeMapping) {
 
     const [MRLpreorderAttributeId] = await getAttributeId(['MRL_filters_preorder']); //現貨/預購 attribute id
     const stockAndPreorderOptionIds = await getStockAndPreorderOptionIds();
-    const stockOptionId = (stockAndPreorderOptionIds.find(option => option.value === '現貨家具') || {}).option_id || ''; //現貨家具option id
-    const preorderOptionId = (stockAndPreorderOptionIds.find(option => option.value === '預購家具') || {}).option_id || ''; //預購家具option id
-
+    const stockOptionId = (stockAndPreorderOptionIds.find(option => option.value === '現貨') || {}).option_id || ''; //現貨家具option id
+    const preorderOptionId = (stockAndPreorderOptionIds.find(option => option.value === '預購') || {}).option_id || ''; //預購家具option id
+    if(!stockOptionId || !preorderOptionId){
+        console.log('Warning: 預購現貨 option id 未找到.');
+    }
 
     
     
@@ -140,12 +142,14 @@ async function formatDataForInsertion(products, attributeMapping) {
 
                     //計算預購or現貨
                     if (key === 'mrl_sap_available_qty') {
-                        let preorderValue = parseFloat(value) + safetyStock > 0 ? stockOptionId : preorderOptionId;
-                        productDataTypeInt.push({
-                            entity_id: product.entity_id,
-                            attribute_id: MRLpreorderAttributeId.attribute_id,
-                            value: preorderValue
-                        });
+                        if(stockOptionId && preorderOptionId){
+                            let preorderValue = parseFloat(value) + safetyStock > 0 ? stockOptionId : preorderOptionId;
+                            productDataTypeInt.push({
+                                entity_id: product.entity_id,
+                                attribute_id: MRLpreorderAttributeId.attribute_id,
+                                value: preorderValue
+                            });
+                        }
                     }
 
 

@@ -70,7 +70,7 @@ async function getStockAndPreorderOptionIds() {
     const query = 
         `SELECT option_id, value
         FROM eav_attribute_option_value
-        WHERE (value = '現貨家具' OR value = '預購家具')
+        WHERE (value = '現貨' OR value = '預購')
         AND store_id = 1`;
     return executeQuery(query);
 }
