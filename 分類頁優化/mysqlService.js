@@ -40,7 +40,7 @@ async function executeQuery(query, params = []) {
 
 // 獲取產品數據
 async function getProductData() {
-    const query = `SELECT entity_id, sku FROM catalog_product_entity`;
+    const query = 'SELECT entity_id, sku FROM catalog_product_entity';
     return executeQuery(query);
 }
 
@@ -53,11 +53,10 @@ async function getProductData() {
 // 獲取屬性 ID、type
 async function getAttributeId(attributeCodeList) {
     const formattedCodeList = attributeCodeList.map(code => `'${code}'`).join(', ');
-    const query = `
-        SELECT attribute_code, attribute_id , backend_type
+    const query = 
+        `SELECT attribute_code, attribute_id, backend_type
         FROM eav_attribute 
-        WHERE attribute_code IN (${formattedCodeList})
-    `;
+        WHERE attribute_code IN (${formattedCodeList})`;
     return executeQuery(query);
 }
 
@@ -66,15 +65,13 @@ async function getAttributeId(attributeCodeList) {
 
 
 
-
 // 獲取現貨/預購的 option id
-async function getStockAndPreorderOptionIds(){
-    const query = `
-        SELECT option_id , value
+async function getStockAndPreorderOptionIds() {
+    const query = 
+        `SELECT option_id, value
         FROM eav_attribute_option_value
         WHERE (value = '現貨家具' OR value = '預購家具')
-        AND store_id = 1;
-    `;
+        AND store_id = 1`;
     return executeQuery(query);
 }
 
@@ -90,12 +87,22 @@ async function updateProductDataType(data, table) {
     const BATCH_SIZE = 500;
     const batches = Math.ceil(data.length / BATCH_SIZE);
 
+    let successCount = 0;
+    let failureCount = 0;
+
     for (let i = 0; i < batches; i++) {
         const batch = data.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
-        await updateProductAttributesInTable(batch, table);
+        try {
+            await updateProductAttributesInTable(batch, table);
+            successCount += batch.length;
+        } catch (error) {
+            console.error(`Batch ${i + 1} failed:`, error);
+            failureCount += batch.length;
+        }
     }
-}
 
+    console.log(`Update completed. Success: ${successCount}, Failure: ${failureCount}`);
+}
 
 
 
@@ -146,16 +153,10 @@ async function updateProductAttributesInTable(data, table) {
 
         // 插入新數據
         await executeQuery(insertQuery);
-        console.log('Data updated successfully');
     } catch (err) {
         console.error('Error updating data:', err);
+        throw err;
     }
 }
 
-
-
-
-
-
-module.exports = { getProductData , getAttributeId , updateProductDataTypeVarchar , updateProductDataTypeInt , updateProductDataTypeText , getStockAndPreorderOptionIds };
-
+module.exports = { getProductData, getAttributeId, updateProductDataTypeVarchar, updateProductDataTypeInt, updateProductDataTypeText, getStockAndPreorderOptionIds };
