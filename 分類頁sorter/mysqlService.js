@@ -142,8 +142,7 @@ async function getCategoryNameById(categoryId) {
 async function updateCategoryProductPosition(categoryId,updateData) {
     try {
         // 刪除舊數據
-        const deleteValues = updateData.map(data => `(${categoryId}, ${data.entity_id})`).join(', ');
-        const deleteQuery = `DELETE FROM catalog_category_product WHERE (category_id, product_id) IN (${deleteValues})`;
+        const deleteQuery = `DELETE FROM catalog_category_product WHERE category_id = ${categoryId}'`;
         await executeQuery(deleteQuery);
 
 
