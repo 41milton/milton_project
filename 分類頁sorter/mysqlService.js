@@ -67,6 +67,7 @@ async function getCategoryProductsById(categoryId) {
     const query =`
     SELECT
         ccp.product_id,
+        ccp.position,
         cpe.sku,
         MAX(CASE WHEN a.attribute_code = 'name' THEN cpev.value END) AS name,
         MAX(CASE WHEN a.attribute_code = 'mrl_sap_cumulative_qty' THEN cpev.value END) AS mrl_sap_cumulative_qty,
