@@ -143,7 +143,7 @@ async function formatDataForInsertion(products, attributeMapping) {
                     //計算預購or現貨
                     if (key === 'mrl_sap_available_qty') {
                         if(stockOptionId && preorderOptionId){
-                            let preorderValue = parseFloat(value) + safetyStock > 0 ? stockOptionId : preorderOptionId;
+                            let preorderValue = parseFloat(value) - safetyStock > 0 ? stockOptionId : preorderOptionId;
                             productDataTypeInt.push({
                                 entity_id: product.entity_id,
                                 attribute_id: MRLpreorderAttributeId.attribute_id,

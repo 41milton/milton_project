@@ -10,7 +10,7 @@ async function productSapToM2Handler(req, res) {
         await updateProductDataTypeVarchar(processedData.productDataTypeVarchar);   //更新資料至mysql(type varchar)
         await updateProductDataTypeInt(processedData.productDataTypeInt);           //更新資料至mysql(type int)
         await updateProductDataTypeText(processedData.productDataTypeText);         //更新資料至mysql(type text)
-        return processedData;
+        return [processedData,products];
     } catch (error) {
         console.error('Error processing data:', error);
         throw error;
