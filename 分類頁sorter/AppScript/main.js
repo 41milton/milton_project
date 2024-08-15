@@ -44,6 +44,12 @@ function getCategoryById(){
     categoryResorterA.getRange('A4:J').clearContent();
     const categoryProducts = response.categoryProducts;
     const numRows = categoryProducts.length;
+    const visibilityMap = {
+        1: 'Not Visible Individually',
+        2: 'Catalog',
+        3: 'Search',
+        4: 'Catalog, Search'
+    };
     if (numRows > 0) {
         const data = categoryProducts.map(product => {
             const dates = JSON.parse(product.mrl_sap_expected_start_date || '[]');
@@ -52,10 +58,11 @@ function getCategoryById(){
             const purchaseQtyFormatted = purchaseQtyList.map(item => {
                 return `${item.purchaseQty}(於${item.remainder})`;
             }).join('\n');
+            const visibilityText = visibilityMap[product.visibility] || 'Unknown';
             return [
                 product.position,
                 product.product_id,
-                '',
+                visibilityText,
                 product.name,
                 product.sku,
                 product.mrl_sap_cumulative_qty,
@@ -68,6 +75,17 @@ function getCategoryById(){
 
         // 將數據寫入 A4 到 J 列
         categoryResorterA.getRange(4, 1, numRows, 10).setValues(data);
+
+
+        // 將負數的 cumulative_qty 列字體顏色設置為紅色
+        const cumulativeQtyRange = categoryResorterA.getRange(4, 7, numRows);
+        const cumulativeQtyValues = cumulativeQtyRange.getValues();
+        for (let i = 0; i < numRows; i++) {
+            const cumulativeQty = parseFloat(cumulativeQtyValues[i][0]);
+            if (cumulativeQty < 0) {
+                cumulativeQtyRange.getCell(i + 1, 1).setFontColor('red');
+            }
+        }
 
         // 删除最后一个非空行以下的所有行
         const lastDataRow = categoryResorterA.getLastRow();

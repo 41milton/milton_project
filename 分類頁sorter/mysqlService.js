@@ -74,7 +74,8 @@ async function getCategoryProductsById(categoryId) {
         MAX(CASE WHEN a.attribute_code = 'mrl_sap_available_qty' THEN cpev.value END) AS mrl_sap_available_qty,
         MAX(CASE WHEN a.attribute_code = 'mrl_sap_status' THEN cpev.value END) AS mrl_sap_status,
         MAX(CASE WHEN a.attribute_code = 'mrl_sap_purchase_qty' THEN cpet.value END) AS mrl_sap_purchase_qty,
-        MAX(CASE WHEN a.attribute_code = 'mrl_sap_expected_start_date' THEN cpet.value END) AS mrl_sap_expected_start_date
+        MAX(CASE WHEN a.attribute_code = 'mrl_sap_expected_start_date' THEN cpet.value END) AS mrl_sap_expected_start_date,
+        MAX(CASE WHEN a.attribute_code = 'visibility' THEN cpei.value END) AS visibility
     FROM
         catalog_category_product AS ccp
     JOIN
@@ -86,13 +87,17 @@ async function getCategoryProductsById(categoryId) {
     LEFT JOIN
         catalog_product_entity_text AS cpet
         ON cpe.entity_id = cpet.entity_id
+    LEFT JOIN
+        catalog_product_entity_int AS cpei
+        ON cpe.entity_id = cpei.entity_id
     JOIN
         eav_attribute AS a
         ON cpev.attribute_id = a.attribute_id
         OR cpet.attribute_id = a.attribute_id
+        OR cpei.attribute_id = a.attribute_id
     WHERE
         ccp.category_id = ${categoryId}
-        AND a.attribute_code IN ('name', 'mrl_sap_cumulative_qty', 'mrl_sap_available_qty', 'mrl_sap_status', 'mrl_sap_purchase_qty', 'mrl_sap_expected_start_date')
+        AND a.attribute_code IN ('name', 'mrl_sap_cumulative_qty', 'mrl_sap_available_qty', 'mrl_sap_status', 'mrl_sap_purchase_qty', 'mrl_sap_expected_start_date', 'visibility')
         AND a.entity_type_id = (
             SELECT entity_type_id
             FROM eav_entity_type
