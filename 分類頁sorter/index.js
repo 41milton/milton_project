@@ -37,8 +37,8 @@ exports.cfM2CategoryPageSorter = async (request, response) => {
       //修改分類頁的內容
       case 'update_category_product_position':
         const updateData = request.body.updateData;
-        const updateResponseawait = updateCategoryProductPosition(categoryId , updateData);
-        response.status(201).send(updateResponseawait);
+        const updateResponse = await updateCategoryProductPosition(categoryId , updateData);
+        response.status(201).json(updateResponse);
         break;
 
 

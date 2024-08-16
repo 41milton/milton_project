@@ -85,6 +85,9 @@ function getCategoryById(){
             if (cumulativeQty < 0) {
                 cumulativeQtyRange.getCell(i + 1, 1).setFontColor('red');
             }
+            else{
+                cumulativeQtyRange.getCell(i + 1, 1).setFontColor('black');
+            }
         }
 
         // 删除最后一个非空行以下的所有行
@@ -117,6 +120,9 @@ function updateCategoryProductPosition(){
         categoryId: categoryId,
         updateData: updateData
     };
-    const response = sendDataToCloudFunction(params);   
-    SpreadsheetApp.getUi().alert('更新成功');
+    const response = sendDataToCloudFunction(params);  
+    if(!response.success){
+        console.log(response.error);
+    } 
+    SpreadsheetApp.getUi().alert(response.message);
 }

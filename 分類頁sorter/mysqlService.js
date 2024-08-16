@@ -65,46 +65,145 @@ async function getCategoryById(categoryId) {
  */
 async function getCategoryProductsById(categoryId) {
     const query =`
-    SELECT
-        ccp.product_id,
-        ccp.position,
-        cpe.sku,
-        MAX(CASE WHEN a.attribute_code = 'name' THEN cpev.value END) AS name,
-        MAX(CASE WHEN a.attribute_code = 'mrl_sap_cumulative_qty' THEN cpev.value END) AS mrl_sap_cumulative_qty,
-        MAX(CASE WHEN a.attribute_code = 'mrl_sap_available_qty' THEN cpev.value END) AS mrl_sap_available_qty,
-        MAX(CASE WHEN a.attribute_code = 'mrl_sap_status' THEN cpev.value END) AS mrl_sap_status,
-        MAX(CASE WHEN a.attribute_code = 'mrl_sap_purchase_qty' THEN cpet.value END) AS mrl_sap_purchase_qty,
-        MAX(CASE WHEN a.attribute_code = 'mrl_sap_expected_start_date' THEN cpet.value END) AS mrl_sap_expected_start_date,
-        MAX(CASE WHEN a.attribute_code = 'visibility' THEN cpei.value END) AS visibility
-    FROM
-        catalog_category_product AS ccp
-    JOIN
-        catalog_product_entity AS cpe
-        ON ccp.product_id = cpe.entity_id
-    LEFT JOIN
-        catalog_product_entity_varchar AS cpev
-        ON cpe.entity_id = cpev.entity_id
-    LEFT JOIN
-        catalog_product_entity_text AS cpet
-        ON cpe.entity_id = cpet.entity_id
-    LEFT JOIN
-        catalog_product_entity_int AS cpei
-        ON cpe.entity_id = cpei.entity_id
-    JOIN
-        eav_attribute AS a
-        ON cpev.attribute_id = a.attribute_id
-        OR cpet.attribute_id = a.attribute_id
-        OR cpei.attribute_id = a.attribute_id
-    WHERE
-        ccp.category_id = ${categoryId}
-        AND a.attribute_code IN ('name', 'mrl_sap_cumulative_qty', 'mrl_sap_available_qty', 'mrl_sap_status', 'mrl_sap_purchase_qty', 'mrl_sap_expected_start_date', 'visibility')
-        AND a.entity_type_id = (
-            SELECT entity_type_id
-            FROM eav_entity_type
-            WHERE entity_type_code = 'catalog_product'
-        )
-    GROUP BY
-        ccp.product_id, cpe.sku;
+        SELECT
+            ccp.product_id,
+            ccp.position,
+            cpe.sku,
+            COALESCE(name_sub.name, '') AS name,
+            COALESCE(mrl_sap_cumulative_qty_sub.mrl_sap_cumulative_qty, '') AS mrl_sap_cumulative_qty,
+            COALESCE(mrl_sap_available_qty_sub.mrl_sap_available_qty, '') AS mrl_sap_available_qty,
+            COALESCE(mrl_sap_status_sub.mrl_sap_status, '') AS mrl_sap_status,
+            COALESCE(mrl_sap_purchase_qty_sub.mrl_sap_purchase_qty, '') AS mrl_sap_purchase_qty,
+            COALESCE(mrl_sap_expected_start_date_sub.mrl_sap_expected_start_date, '') AS mrl_sap_expected_start_date,
+            COALESCE(visibility_sub.visibility, '') AS visibility
+        FROM
+            catalog_category_product AS ccp
+        JOIN
+            catalog_product_entity AS cpe
+            ON ccp.product_id = cpe.entity_id
+        LEFT JOIN (
+            SELECT
+                entity_id,
+                MAX(CASE WHEN attribute_code = 'name' THEN value END) AS name
+            FROM
+                catalog_product_entity_varchar
+            JOIN
+                eav_attribute
+            ON
+                catalog_product_entity_varchar.attribute_id = eav_attribute.attribute_id
+            WHERE
+                eav_attribute.attribute_code = 'name'
+            GROUP BY
+                entity_id
+        ) AS name_sub
+        ON
+            cpe.entity_id = name_sub.entity_id
+        LEFT JOIN (
+            SELECT
+                entity_id,
+                MAX(CASE WHEN attribute_code = 'mrl_sap_cumulative_qty' THEN value END) AS mrl_sap_cumulative_qty
+            FROM
+                catalog_product_entity_varchar
+            JOIN
+                eav_attribute
+            ON
+                catalog_product_entity_varchar.attribute_id = eav_attribute.attribute_id
+            WHERE
+                eav_attribute.attribute_code = 'mrl_sap_cumulative_qty'
+            GROUP BY
+                entity_id
+        ) AS mrl_sap_cumulative_qty_sub
+        ON
+            cpe.entity_id = mrl_sap_cumulative_qty_sub.entity_id
+        LEFT JOIN (
+            SELECT
+                entity_id,
+                MAX(CASE WHEN attribute_code = 'mrl_sap_available_qty' THEN value END) AS mrl_sap_available_qty
+            FROM
+                catalog_product_entity_varchar
+            JOIN
+                eav_attribute
+            ON
+                catalog_product_entity_varchar.attribute_id = eav_attribute.attribute_id
+            WHERE
+                eav_attribute.attribute_code = 'mrl_sap_available_qty'
+            GROUP BY
+                entity_id
+        ) AS mrl_sap_available_qty_sub
+        ON
+            cpe.entity_id = mrl_sap_available_qty_sub.entity_id
+        LEFT JOIN (
+            SELECT
+                entity_id,
+                MAX(CASE WHEN attribute_code = 'mrl_sap_status' THEN value END) AS mrl_sap_status
+            FROM
+                catalog_product_entity_varchar
+            JOIN
+                eav_attribute
+            ON
+                catalog_product_entity_varchar.attribute_id = eav_attribute.attribute_id
+            WHERE
+                eav_attribute.attribute_code = 'mrl_sap_status'
+            GROUP BY
+                entity_id
+        ) AS mrl_sap_status_sub
+        ON
+            cpe.entity_id = mrl_sap_status_sub.entity_id
+        LEFT JOIN (
+            SELECT
+                entity_id,
+                MAX(CASE WHEN attribute_code = 'mrl_sap_purchase_qty' THEN value END) AS mrl_sap_purchase_qty
+            FROM
+                catalog_product_entity_text
+            JOIN
+                eav_attribute
+            ON
+                catalog_product_entity_text.attribute_id = eav_attribute.attribute_id
+            WHERE
+                eav_attribute.attribute_code = 'mrl_sap_purchase_qty'
+            GROUP BY
+                entity_id
+        ) AS mrl_sap_purchase_qty_sub
+        ON
+            cpe.entity_id = mrl_sap_purchase_qty_sub.entity_id
+        LEFT JOIN (
+            SELECT
+                entity_id,
+                MAX(CASE WHEN attribute_code = 'mrl_sap_expected_start_date' THEN value END) AS mrl_sap_expected_start_date
+            FROM
+                catalog_product_entity_text
+            JOIN
+                eav_attribute
+            ON
+                catalog_product_entity_text.attribute_id = eav_attribute.attribute_id
+            WHERE
+                eav_attribute.attribute_code = 'mrl_sap_expected_start_date'
+            GROUP BY
+                entity_id
+        ) AS mrl_sap_expected_start_date_sub
+        ON
+            cpe.entity_id = mrl_sap_expected_start_date_sub.entity_id
+        LEFT JOIN (
+            SELECT
+                entity_id,
+                MAX(CASE WHEN attribute_code = 'visibility' THEN value END) AS visibility
+            FROM
+                catalog_product_entity_int
+            JOIN
+                eav_attribute
+            ON
+                catalog_product_entity_int.attribute_id = eav_attribute.attribute_id
+            WHERE
+                eav_attribute.attribute_code = 'visibility'
+            GROUP BY
+                entity_id
+        ) AS visibility_sub
+        ON
+            cpe.entity_id = visibility_sub.entity_id
+        WHERE
+            ccp.category_id = ${categoryId}
+        GROUP BY
+            ccp.product_id, cpe.sku;
     `;
     return executeQuery(query);
 }
@@ -147,7 +246,7 @@ async function getCategoryNameById(categoryId) {
 async function updateCategoryProductPosition(categoryId,updateData) {
     try {
         // 刪除舊數據
-        const deleteQuery = `DELETE FROM catalog_category_product WHERE category_id = ${categoryId}'`;
+        const deleteQuery = `DELETE FROM catalog_category_product WHERE category_id = ${categoryId}`;
         await executeQuery(deleteQuery);
 
 
@@ -156,11 +255,18 @@ async function updateCategoryProductPosition(categoryId,updateData) {
         const insertQuery = `INSERT INTO catalog_category_product (category_id, product_id, position) VALUES ${insertValues}`;
         await executeQuery(insertQuery);
 
-        return 'Category inserted';
+        return {
+            success: true,
+            message: '更新成功',
+        };
 
     } catch (err) {
         console.error('Error updating data:', err);
-        throw err;
+        return {
+            success: false,
+            message: 'Error updating category product positions',
+            error: err.message,
+        };
     }
 }
 
