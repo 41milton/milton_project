@@ -28,8 +28,7 @@ function sendDataToCloudFunction(params) {
 
 
 function getCategoryById(){
-    const categoryId = categoryResorterA.getRange('L2').getValue();
-    categoryResorterA.getRange('O2').setValue(categoryId);
+    const categoryId = categoryResorterA.getRange('A3').getValue();
     const params = {
         action: 'get_category_product_by_id',
         categoryId: categoryId
@@ -37,11 +36,10 @@ function getCategoryById(){
     const response = sendDataToCloudFunction(params);
 
     // 寫分類頁名稱
-    categoryResorterA.getRange('M2').setValue(response.categoryName[0].value);
-    categoryResorterA.getRange('P2').setValue(response.categoryName[0].value);
+    categoryResorterA.getRange('B3').setValue(response.categoryName[0].value);
 
     // list product
-    categoryResorterA.getRange('A4:J').clearContent();
+    categoryResorterA.getRange('A8:J').clearContent();
     const categoryProducts = response.categoryProducts;
     const numRows = categoryProducts.length;
     const visibilityMap = {
@@ -62,23 +60,23 @@ function getCategoryById(){
             return [
                 product.position,
                 product.product_id,
-                visibilityText,
                 product.name,
                 product.sku,
                 product.mrl_sap_cumulative_qty,
                 product.mrl_sap_available_qty,
                 purchaseQtyFormatted,
                 datesString,
-                product.mrl_sap_status
+                product.mrl_sap_status,
+                visibilityText
             ];
         });
 
         // 將數據寫入 A4 到 J 列
-        categoryResorterA.getRange(4, 1, numRows, 10).setValues(data);
+        categoryResorterA.getRange(8, 1, numRows, 10).setValues(data);
 
 
         // 將負數的 cumulative_qty 列字體顏色設置為紅色
-        const cumulativeQtyRange = categoryResorterA.getRange(4, 7, numRows);
+        const cumulativeQtyRange = categoryResorterA.getRange(8, 6, numRows);
         const cumulativeQtyValues = cumulativeQtyRange.getValues();
         for (let i = 0; i < numRows; i++) {
             const cumulativeQty = parseFloat(cumulativeQtyValues[i][0]);
@@ -108,8 +106,8 @@ function getCategoryById(){
 
 
 function updateCategoryProductPosition(){
-    const categoryId = categoryResorterA.getRange('O2').getValue();
-    const data = categoryResorterA.getRange('A4:B' + categoryResorterA.getLastRow()).getValues();
+    const categoryId = categoryResorterA.getRange('A3').getValue();
+    const data = categoryResorterA.getRange('A8:B' + categoryResorterA.getLastRow()).getValues();
     var updateData = data.map(row => ({
         entity_id: row[1],
         position: row[0]
