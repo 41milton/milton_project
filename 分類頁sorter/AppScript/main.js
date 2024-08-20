@@ -171,6 +171,14 @@ function getCategoryByAttributeAndId(){
         categoryResorterB.getRange(16, 1, numRows, 11).setValues(data);
 
 
+        // 將 B 列的值設定為複選框
+        const checkboxRange = categoryResorterB.getRange(16, 2, numRows);
+        const checkboxRule = SpreadsheetApp.newDataValidation()
+            .requireCheckbox()
+            .build();
+        checkboxRange.setDataValidation(checkboxRule);
+
+
         // 將負數的 cumulative_qty 列字體顏色設置為紅色
         const cumulativeQtyRange = categoryResorterB.getRange(16, 7, numRows);
         const cumulativeQtyValues = cumulativeQtyRange.getValues();
