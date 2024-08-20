@@ -1,7 +1,13 @@
 var spread = SpreadsheetApp.getActiveSpreadsheet();
 var categoryResorterA = spread.getSheetByName('分類頁resorter A');
 var categoryResorterB = spread.getSheetByName('分類頁resorter B');
-
+var mappingTable = spread.getSheetByName('Mapping Table');
+const visibilityMap = {
+    1: 'Not Visible Individually',
+    2: 'Catalog',
+    3: 'Search',
+    4: 'Catalog, Search'
+};
 
 
 function sendDataToCloudFunction(params) {
@@ -42,12 +48,6 @@ function getCategoryById(){
     categoryResorterA.getRange('A8:J').clearContent();
     const categoryProducts = response.categoryProducts;
     const numRows = categoryProducts.length;
-    const visibilityMap = {
-        1: 'Not Visible Individually',
-        2: 'Catalog',
-        3: 'Search',
-        4: 'Catalog, Search'
-    };
     if (numRows > 0) {
         const data = categoryProducts.map(product => {
             const dates = JSON.parse(product.mrl_sap_expected_start_date || '[]');
@@ -131,11 +131,7 @@ function getCategoryByAttributeAndId(){
     const params = {
         action: 'get_category_product_by_attribute_and_id',
         categoryId: categoryId,
-        attribute: {
-            mrl_sap_subcategory: [
-                'RHF', 'LHF', 'RHFP', 'LHFP'
-            ]
-        }
+        attribute: getCategoryDetailsById(categoryId)
     };
     const response = sendDataToCloudFunction(params);
 
@@ -146,12 +142,6 @@ function getCategoryByAttributeAndId(){
     categoryResorterB.getRange('A16:K').clearContent();
     const categoryProducts = response.categoryProducts;
     const numRows = categoryProducts.length;
-    const visibilityMap = {
-        1: 'Not Visible Individually',
-        2: 'Catalog',
-        3: 'Search',
-        4: 'Catalog, Search'
-    };
     if (numRows > 0) {
         const data = categoryProducts.map(product => {
             const dates = JSON.parse(product.mrl_sap_expected_start_date || '[]');
@@ -206,4 +196,60 @@ function getCategoryByAttributeAndId(){
         }
     }
 
+}
+
+
+
+function getCategoryDetailsById(categoryId) {    
+    const dataRange = mappingTable.getDataRange();
+    const data = dataRange.getValues();
+    
+    let result = {};
+    const reverseVisibilityMap = Object.fromEntries(
+        Object.entries(visibilityMap).map(([key, value]) => [value, key])
+    );
+    for (let i = 2; i < data.length; i++) {
+        if (data[i][0] == categoryId) {
+            if (data[i][2]) {
+                result.mrl_sap_space = data[i][2].split(',').map(status => status.trim());
+            }
+            
+            if (data[i][3]) {
+                result.mrl_sap_subcategory = data[i][3].split(',').map(status => status.trim());
+            }
+            
+            if (data[i][4]) {
+                result.mrl_sap_status = data[i][4].split(',').map(status => status.trim());
+            }
+            
+            if (data[i][5]) {
+                result.visibility = [reverseVisibilityMap[data[i][5].trim()] || 'Unknown'];
+            }
+            break;
+        }
+    }
+    
+    return result;
+}
+
+
+
+function updateCategoryBProductPosition(){
+    const categoryId = categoryResorterB.getRange('A3').getValue();
+    const data = categoryResorterB.getRange('A16:C' + categoryResorterB.getLastRow()).getValues();
+    var updateData = data.filter(row => row[1] === true).map(row => ({
+        entity_id: row[2],
+        position: row[0]
+    }));
+
+    var params = {
+        action: 'update_category_product_position',
+        categoryId: categoryId,
+        updateData: updateData
+    };
+    const response = sendDataToCloudFunction(params);  
+    if(!response.success){
+        console.log(response.error);
+    } 
+    SpreadsheetApp.getUi().alert(response.message);
 }
