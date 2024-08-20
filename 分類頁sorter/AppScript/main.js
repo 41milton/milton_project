@@ -71,7 +71,7 @@ function getCategoryById(){
             ];
         });
 
-        // 將數據寫入 A4 到 J 列
+        // 將數據寫入 A8 到 J 列
         categoryResorterA.getRange(8, 1, numRows, 10).setValues(data);
 
 
@@ -123,4 +123,87 @@ function updateCategoryProductPosition(){
         console.log(response.error);
     } 
     SpreadsheetApp.getUi().alert(response.message);
+}
+
+
+function getCategoryByAttributeAndId(){
+    const categoryId = categoryResorterB.getRange('A3').getValue();
+    const params = {
+        action: 'get_category_product_by_attribute_and_id',
+        categoryId: categoryId,
+        attribute: {
+            mrl_sap_subcategory: [
+                'RHF', 'LHF', 'RHFP', 'LHFP'
+            ]
+        }
+    };
+    const response = sendDataToCloudFunction(params);
+
+    // 寫分類頁名稱
+    categoryResorterB.getRange('B3').setValue(response.categoryName[0].value);
+
+    // list product
+    categoryResorterB.getRange('A16:K').clearContent();
+    const categoryProducts = response.categoryProducts;
+    const numRows = categoryProducts.length;
+    const visibilityMap = {
+        1: 'Not Visible Individually',
+        2: 'Catalog',
+        3: 'Search',
+        4: 'Catalog, Search'
+    };
+    if (numRows > 0) {
+        const data = categoryProducts.map(product => {
+            const dates = JSON.parse(product.mrl_sap_expected_start_date || '[]');
+            const datesString = dates.join('\n');
+            const purchaseQtyList = JSON.parse(product.mrl_sap_purchase_qty || '[]');
+            const purchaseQtyFormatted = purchaseQtyList.map(item => {
+                return `${item.purchaseQty}(於${item.remainder})`;
+            }).join('\n');
+            const visibilityText = visibilityMap[product.visibility] || 'Unknown';
+            const isPositionNumber = !isNaN(parseFloat(product.position)) && isFinite(product.position);
+            return [
+                product.position,
+                isPositionNumber,
+                product.product_id,
+                product.name,
+                product.sku,
+                product.mrl_sap_cumulative_qty,
+                product.mrl_sap_available_qty,
+                purchaseQtyFormatted,
+                datesString,
+                product.mrl_sap_status,
+                visibilityText
+            ];
+        });
+
+        // 將數據寫入 A16 到 J 列
+        categoryResorterB.getRange(16, 1, numRows, 11).setValues(data);
+
+
+        // 將負數的 cumulative_qty 列字體顏色設置為紅色
+        const cumulativeQtyRange = categoryResorterB.getRange(16, 7, numRows);
+        const cumulativeQtyValues = cumulativeQtyRange.getValues();
+        for (let i = 0; i < numRows; i++) {
+            const cumulativeQty = parseFloat(cumulativeQtyValues[i][0]);
+            if (cumulativeQty < 0) {
+                cumulativeQtyRange.getCell(i + 1, 1).setFontColor('red');
+            }
+            else{
+                cumulativeQtyRange.getCell(i + 1, 1).setFontColor('black');
+            }
+        }
+
+        // 删除最后一个非空行以下的所有行
+        const lastDataRow = categoryResorterB.getLastRow();
+        const lastRow = categoryResorterB.getMaxRows();
+        let deleteRow = lastRow - lastDataRow;
+        if(deleteRow > 2){
+            categoryResorterB.deleteRows(lastDataRow + 1, deleteRow - 2);
+        }
+        else{
+            categoryResorterB.insertRowsAfter(lastDataRow, 2);
+        }
+    }
+
 }

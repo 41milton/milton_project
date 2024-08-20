@@ -11,7 +11,8 @@ SELECT
 
     COALESCE(text_attributes.mrl_sap_purchase_qty, '') AS mrl_sap_purchase_qty,
     COALESCE(text_attributes.mrl_sap_expected_start_date, '') AS mrl_sap_expected_start_date,
-    COALESCE(int_attributes.visibility, '') AS visibility
+    COALESCE(int_attributes.visibility, '') AS visibility,
+    COALESCE(ccp.position, 'null') AS position
 FROM
     catalog_product_entity AS cpe
 LEFT JOIN (
@@ -71,11 +72,26 @@ LEFT JOIN (
 ) AS int_attributes
 ON
     cpe.entity_id = int_attributes.entity_id
+LEFT JOIN (
+    SELECT * FROM catalog_category_product WHERE category_id = ${categoryId}
+) AS ccp
+ON
+    cpe.entity_id = ccp.product_id
 WHERE
-    mrl_sap_status = '常備品'
-AND
-    mrl_sap_space = '客廳'
-AND
-    mrl_sap_subcategory = 'LHF'
+    cpe.entity_id IN (
+        SELECT product_id FROM catalog_category_product WHERE category_id = ${categoryId}
+    )
+
+OR
+    (
+        mrl_sap_status = IN ('常備品')
+    AND
+        mrl_sap_space = IN ('客廳')
+    AND
+        mrl_sap_subcategory IN ('LHF')
+    AND
+        visibility IN (4)
+    )
+    
 GROUP BY
-    cpe.entity_id, cpe.sku;
+    cpe.entity_id, cpe.sku, ccp.position; 

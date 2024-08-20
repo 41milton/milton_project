@@ -1,4 +1,4 @@
-const { getCategoryById, updateCategoryProductPosition } = require('./mysqlService');
+const { getCategoryById, updateCategoryProductPosition , getCategoryByAttributeAndId } = require('./mysqlService');
 
 
 /**
@@ -19,7 +19,7 @@ exports.cfM2CategoryPageSorter = async (request, response) => {
 
     const action = request.body.action;
     const categoryId = request.body.categoryId;
-
+    let responseData;
 
 
     switch (action) {
@@ -28,10 +28,21 @@ exports.cfM2CategoryPageSorter = async (request, response) => {
 
       //取得分類頁下的內容
       case 'get_category_product_by_id':
-        const data = await getCategoryById(categoryId);
-        response.status(200).json(data);
+        responseData = await getCategoryById(categoryId);
+        response.status(200).json(responseData);
         break;
 
+
+
+
+      //用attribute取得分類頁下的內容
+      case 'get_category_product_by_attribute_and_id':
+        const attribute = request.body.attribute;
+        responseData = await getCategoryByAttributeAndId(attribute , categoryId);
+        response.status(200).json(responseData);
+        break;
+
+        
 
 
       //修改分類頁的內容
