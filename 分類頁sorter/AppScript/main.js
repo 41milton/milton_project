@@ -234,7 +234,7 @@ function getCategoryDetailsById(categoryId) {
 
 
 
-function updateCategoryBProductPosition(){
+function updateCategoryProductPositionWithBoolean(){
     const categoryId = categoryResorterB.getRange('A3').getValue();
     const data = categoryResorterB.getRange('A16:C' + categoryResorterB.getLastRow()).getValues();
     var updateData = data.filter(row => row[1] === true).map(row => ({
