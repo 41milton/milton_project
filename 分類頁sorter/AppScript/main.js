@@ -270,6 +270,11 @@ function updateCategoryProductPositionWithBoolean(){
 function onFilter(){
     var items = categoryResorterB.getRange('A16:L').getValues();
     var [title] = categoryResorterB.getRange('A15:L15').getValues();
+    var priceCondition = {name:'折扣後金額'};
+    var minPrice = categoryResorterB.getRange('B8').getValues();
+    var maxPrice = categoryResorterB.getRange('D8').getValues();
+    if(minPrice != '') priceCondition.minPrice = minPrice;
+    if(maxPrice != '') priceCondition.maxPrice = maxPrice;
     var params = {
         action: 'filter_data',
         data: {
@@ -281,16 +286,52 @@ function onFilter(){
                     start: '',
                     end: ''
                 },
-                {
-                    name: '折扣後金額',
-                    start: '300',
-                    end: '5000'
-                }
+                priceCondition
             ]
         }
     };
-    const response = sendDataToCloudFunction(params); 
-    console.log(response); 
+
+
+    const data = sendDataToCloudFunction(params); 
+    const numRows = data.length;
+    categoryResorterB.getRange('B16:B'+ categoryResorterB.getLastRow()).removeCheckboxes();
+    categoryResorterB.getRange('A16:L').clearContent();
+
+    // 將數據寫入 A16 到 L 列
+    categoryResorterB.getRange(16, 1, numRows, 12).setValues(data);
+
+
+    // 將 B 列的值設定為複選框
+    const checkboxRange = categoryResorterB.getRange(16, 2, numRows);
+    const checkboxRule = SpreadsheetApp.newDataValidation()
+        .requireCheckbox()
+        .build();
+    checkboxRange.setDataValidation(checkboxRule);
+
+
+    // 將負數的 cumulative_qty 列字體顏色設置為紅色
+    const cumulativeQtyRange = categoryResorterB.getRange(16, 7, numRows);
+    const cumulativeQtyValues = cumulativeQtyRange.getValues();
+    for (let i = 0; i < numRows; i++) {
+        const cumulativeQty = parseFloat(cumulativeQtyValues[i][0]);
+        if (cumulativeQty < 0) {
+            cumulativeQtyRange.getCell(i + 1, 1).setFontColor('red');
+        }
+        else{
+            cumulativeQtyRange.getCell(i + 1, 1).setFontColor('black');
+        }
+    }
+
+    // 删除最后一个非空行以下的所有行
+    const lastDataRow = categoryResorterB.getLastRow();
+    const lastRow = categoryResorterB.getMaxRows();
+    let deleteRow = lastRow - lastDataRow;
+    if(deleteRow > 2){
+        categoryResorterB.deleteRows(lastDataRow + 1, deleteRow - 2);
+    }
+    else{
+        categoryResorterB.insertRowsAfter(lastDataRow, 2);
+    }
 }
 
 

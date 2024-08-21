@@ -7,14 +7,24 @@
 function filterData(data) {
     const title = data.title;
     const items = data.items;
+    let minPrice = 0;
+    let maxPrice = Infinity;
     
     const priceIndex = title.indexOf('折扣後金額');
     if (priceIndex === -1) {
         throw new Error('折扣後金額的標題未找到');
     }
     
-    const minPrice = parseInt(data.condition.find(cond => cond.name === '折扣後金額')?.start || 0, 10);
-    const maxPrice = parseInt(data.condition.find(cond => cond.name === '折扣後金額')?.end || Infinity, 10);
+    const priceCondition = data.condition.find(cond => cond.name === '折扣後金額');
+    
+    if (priceCondition) {
+        if (priceCondition.minPrice) {
+            minPrice = parseInt(priceCondition.minPrice, 10);
+        }
+        if (priceCondition.maxPrice) {
+            maxPrice = parseInt(priceCondition.maxPrice, 10);
+        }
+    }
 
     // 篩選 items 中的項目
     const filteredItems = items.filter(item => {
