@@ -90,7 +90,8 @@ async function getCategoryProductsByAttributeAndId(attributes,categoryId) {
             COALESCE(text_attributes.mrl_sap_purchase_qty, '') AS mrl_sap_purchase_qty,
             COALESCE(text_attributes.mrl_sap_expected_start_date, '') AS mrl_sap_expected_start_date,
             COALESCE(int_attributes.visibility, '') AS visibility,
-            COALESCE(ccp.position, 'null') AS position
+            COALESCE(ccp.position, 'null') AS position,
+            COALESCE(decimal_attributes.MRL_discount_price, '') AS mrl_discount_price
         FROM
             catalog_product_entity AS cpe
         LEFT JOIN (
@@ -150,6 +151,23 @@ async function getCategoryProductsByAttributeAndId(attributes,categoryId) {
         ) AS int_attributes
         ON
             cpe.entity_id = int_attributes.entity_id
+        LEFT JOIN (
+            SELECT
+                entity_id,
+                MAX(CASE WHEN attribute_code = 'MRL_discount_price' THEN value END) AS MRL_discount_price
+            FROM
+                catalog_product_entity_decimal
+            JOIN
+                eav_attribute
+            ON
+                catalog_product_entity_decimal.attribute_id = eav_attribute.attribute_id
+            WHERE
+                eav_attribute.attribute_code = 'MRL_discount_price'
+            GROUP BY
+                entity_id
+        ) AS decimal_attributes
+        ON
+            cpe.entity_id = decimal_attributes.entity_id
         LEFT JOIN (
             SELECT * FROM catalog_category_product WHERE category_id = ${categoryId}
         ) AS ccp

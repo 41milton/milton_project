@@ -139,7 +139,7 @@ function getCategoryByAttributeAndId(){
     categoryResorterB.getRange('B3').setValue(response.categoryName[0].value);
 
     // list product
-    categoryResorterB.getRange('A16:K').clearContent();
+    categoryResorterB.getRange('A16:L').clearContent();
     const categoryProducts = response.categoryProducts;
     const numRows = categoryProducts.length;
     if (numRows > 0) {
@@ -163,12 +163,13 @@ function getCategoryByAttributeAndId(){
                 purchaseQtyFormatted,
                 datesString,
                 product.mrl_sap_status,
-                visibilityText
+                visibilityText,
+                product.mrl_discount_price
             ];
         });
 
-        // 將數據寫入 A16 到 J 列
-        categoryResorterB.getRange(16, 1, numRows, 11).setValues(data);
+        // 將數據寫入 A16 到 L 列
+        categoryResorterB.getRange(16, 1, numRows, 12).setValues(data);
 
 
         // 將 B 列的值設定為複選框
