@@ -127,6 +127,7 @@ function updateCategoryProductPosition(){
 
 
 function getCategoryByAttributeAndId(){
+    categoryResorterB.getRange('B16:B'+ categoryResorterB.getLastRow()).removeCheckboxes(); 
     const categoryId = categoryResorterB.getRange('A3').getValue();
     const params = {
         action: 'get_category_product_by_attribute_and_id',
@@ -152,6 +153,7 @@ function getCategoryByAttributeAndId(){
             }).join('\n');
             const visibilityText = visibilityMap[product.visibility] || 'Unknown';
             const isPositionNumber = !isNaN(parseFloat(product.position)) && isFinite(product.position);
+            const price = (parseFloat(product.mrl_discount_price) === 0) ? product.original_price : product.mrl_discount_price;
             return [
                 product.position,
                 isPositionNumber,
@@ -164,7 +166,7 @@ function getCategoryByAttributeAndId(){
                 datesString,
                 product.mrl_sap_status,
                 visibilityText,
-                product.mrl_discount_price
+                price
             ];
         });
 
@@ -262,3 +264,33 @@ function updateCategoryProductPositionWithBoolean(){
     } 
     SpreadsheetApp.getUi().alert(response.message);
 }
+
+
+
+function onFilter(){
+    var items = categoryResorterB.getRange('A16:L').getValues();
+    var [title] = categoryResorterB.getRange('A15:L15').getValues();
+    var params = {
+        action: 'filter_data',
+        data: {
+            items: items,
+            title: title,
+            condition: [
+                {
+                    name: '預計交期起算',
+                    start: '',
+                    end: ''
+                },
+                {
+                    name: '折扣後金額',
+                    start: '300',
+                    end: '5000'
+                }
+            ]
+        }
+    };
+    const response = sendDataToCloudFunction(params); 
+    console.log(response); 
+}
+
+

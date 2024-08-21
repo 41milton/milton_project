@@ -1,4 +1,5 @@
 const { getCategoryById, updateCategoryProductPosition , getCategoryByAttributeAndId } = require('./mysqlService');
+const { filterData } = require('./dataFilter');
 
 
 /**
@@ -18,7 +19,7 @@ exports.cfM2CategoryPageSorter = async (request, response) => {
     }
 
     const action = request.body.action;
-    const categoryId = request.body.categoryId;
+    let categoryId;
     let responseData;
 
 
@@ -28,6 +29,7 @@ exports.cfM2CategoryPageSorter = async (request, response) => {
 
       //取得分類頁下的內容
       case 'get_category_product_by_id':
+        categoryId = request.body.categoryId;
         responseData = await getCategoryById(categoryId);
         response.status(200).json(responseData);
         break;
@@ -37,6 +39,7 @@ exports.cfM2CategoryPageSorter = async (request, response) => {
 
       //用attribute取得分類頁下的內容
       case 'get_category_product_by_attribute_and_id':
+        categoryId = request.body.categoryId;
         const attribute = request.body.attribute;
         responseData = await getCategoryByAttributeAndId(attribute , categoryId);
         response.status(200).json(responseData);
@@ -47,9 +50,20 @@ exports.cfM2CategoryPageSorter = async (request, response) => {
 
       //修改分類頁的內容
       case 'update_category_product_position':
+        categoryId = request.body.categoryId;
         const updateData = request.body.updateData;
         const updateResponse = await updateCategoryProductPosition(categoryId , updateData);
         response.status(201).json(updateResponse);
+        break;
+
+
+      
+
+      //對data做篩選
+      case 'filter_data':
+        const data = request.body.data;
+        const filteredData = filterData(data);
+        response.status(200).json(filteredData);
         break;
 
 
