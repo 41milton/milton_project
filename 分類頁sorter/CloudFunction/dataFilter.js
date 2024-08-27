@@ -55,27 +55,27 @@ function filterDateData(items, condition, indexList) {
         } else {
             if (!stock.length) {
                 return false;
-            } else if(!stock.includes(0)) {
-                const firstDataDateObj = new Date(deliveryDate[0]);
-                return firstDataDateObj <= conditionDateObj;
             } else {
                 const lastZeroIndex = stock.lastIndexOf(0);
 
-                if (lastZeroIndex === stock.length - 1) {
+                if (lastZeroIndex === stock.length - 1 || lastZeroIndex >= deliveryDate.length) {
                     return false;
                 }
 
-                if (lastZeroIndex === -1 || lastZeroIndex >= deliveryDate.length) {
-                    return false; // 如果沒有找到 0 或索引超出範圍，則過濾掉
+                if (lastZeroIndex === -1) {
+                    var lastDataRow = deliveryDate[0];
                 }
-
-                const lastDataRow = deliveryDate[lastZeroIndex + 1];
+                else{
+                    var lastDataRow = deliveryDate[lastZeroIndex + 1];
+                }
                 const lastDataDateObj = new Date(lastDataRow);
+
 
                 // 確保日期有效
                 if (isNaN(lastDataDateObj)) {
                     return false;
                 }
+
 
                 return lastDataDateObj <= conditionDateObj;
             }
