@@ -5,43 +5,107 @@
  */
 function filterData(data) {
     const { title, items, condition } = data;
-    const priceIndex = title.indexOf('折扣後金額');
-    const deliveryDateIndex = title.indexOf('預計交期起算');
-    const quantityIndex = title.indexOf('可銷售數量');
-    const stockIndex = title.indexOf('預計進貨量');
+    const indexList = {
+        priceIndex: title.indexOf('折扣後金額'),
+        deliveryDateIndex: title.indexOf('預計交期起算'),
+        quantityIndex: title.indexOf('可銷售數量'),
+        stockIndex: title.indexOf('預計進貨量')
+    }
 
 
-    if (priceIndex === -1) {
+    if (indexList.priceIndex === -1) {
         throw new Error('折扣後金額的標題未找到');
     }
-    if (deliveryDateIndex === -1) {
+    if (indexList.deliveryDateIndex === -1) {
         throw new Error('預計交期起算的標題未找到');
     }
-    if (quantityIndex === -1) {
+    if (indexList.quantityIndex === -1) {
         throw new Error('可銷售數量的標題未找到');
     }
-    if (stockIndex === -1) {
+    if (indexList.stockIndex === -1) {
         throw new Error('預計進貨量的標題未找到');
     }
 
 
-    const filteredByPrice = filterPriceData(items,condition,priceIndex);
+    const filteredByPrice = filterPriceData(items,condition,indexList);
+
+    const filteredByDate = filterDateData(filteredByPrice,condition,indexList);
+
+
+    return filteredByDate;
+}
 
 
 
-    return filteredByPrice;
+function filterDateData(items, condition, indexList) {
+    const { conditionDate } = condition.find(cond => cond.name === '預計交期起算') || {};
+    const conditionDateObj = conditionDate ? new Date(conditionDate) : null;
+
+    return items.filter(item => {
+        const quantity = parseInt(item[indexList.quantityIndex], 10);
+        const stock = extractStockNumbers(item[indexList.stockIndex]);
+        const deliveryDate = item[indexList.deliveryDateIndex].split('\n');
+
+        if (!conditionDateObj) {
+            return true;
+        }
+
+        if (quantity > 0) {
+            return true;
+        } else {
+            if (!stock.length) {
+                return false;
+            } else if(!stock.includes(0)) {
+                const firstDataDateObj = new Date(deliveryDate[0]);
+                return firstDataDateObj <= conditionDateObj;
+            } else {
+                const lastZeroIndex = stock.lastIndexOf(0);
+
+                if (lastZeroIndex === stock.length - 1) {
+                    return false;
+                }
+
+                if (lastZeroIndex === -1 || lastZeroIndex >= deliveryDate.length) {
+                    return false; // 如果沒有找到 0 或索引超出範圍，則過濾掉
+                }
+
+                const lastDataRow = deliveryDate[lastZeroIndex + 1];
+                const lastDataDateObj = new Date(lastDataRow);
+
+                // 確保日期有效
+                if (isNaN(lastDataDateObj)) {
+                    return false;
+                }
+
+                return lastDataDateObj <= conditionDateObj;
+            }
+        }
+    });
+}
+
+
+function filterPriceData(items,condition,indexList){
+    const { minPrice = 0, maxPrice = Infinity } = condition.find(cond => cond.name === '折扣後金額') || {};
+
+    return items.filter(item => {
+        const discountPrice = parseInt(item[indexList.priceIndex], 10);
+        return discountPrice >= minPrice && discountPrice <= maxPrice;
+    });
 }
 
 
 
 
 
-function filterPriceData(items,condition,priceIndex){
-    const { minPrice = 0, maxPrice = Infinity } = condition.find(cond => cond.name === '折扣後金額') || {};
-
-    return items.filter(item => {
-        const discountPrice = parseInt(item[priceIndex], 10);
-        return discountPrice >= minPrice && discountPrice <= maxPrice;
+/**
+ * 從預計進貨量的字串中提取 "於" 後的數字
+ * @param {String} stockStr - 包含預計進貨量的字串，如 '1(於0)\n2(於0)\n3(於2)'
+ * @returns {Array} - 提取的數字組成的數組，如 [0, 0, 2]
+ */
+function extractStockNumbers(stockStr) {
+    return stockStr.split('\n').map(item => {
+        const match = item.match(/於(\d+)/);
+        return match ? parseInt(match[1], 10) : 0; // 默認為 0 如果無法匹配
     });
 }
 

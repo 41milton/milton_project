@@ -275,17 +275,16 @@ function onFilter(){
     var maxPrice = categoryResorterB.getRange('D8').getValues();
     if(minPrice != '') priceCondition.minPrice = minPrice;
     if(maxPrice != '') priceCondition.maxPrice = maxPrice;
+    var dateCondition = {name:'預計交期起算'};
+    var conditionDateTime = categoryResorterB.getRange('B7').getValues();
+    if(conditionDateTime != '') dateCondition.conditionDate = conditionDateTime;
     var params = {
         action: 'filter_data',
         data: {
             items: items,
             title: title,
             condition: [
-                {
-                    name: '預計交期起算',
-                    start: '',
-                    end: ''
-                },
+                dateCondition,
                 priceCondition
             ]
         }
