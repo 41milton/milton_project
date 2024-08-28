@@ -289,24 +289,15 @@ function updateCategoryProductPositionWithBoolean(){
 
 
 function onFilter(){
-    var items = categoryResorterB.getRange('A16:L').getValues();
+    var items = categoryResorterB.getRange('A16:L').getDisplayValues();
     var [title] = categoryResorterB.getRange('A15:L15').getValues();
-    //將預計交期起算轉成yyyy-mm-dd
-    // const dateIndex = title.indexOf('預計交期起算');
-    // for (let i = 0; i < items.length; i++) {
-    //     if (items[i][dateIndex] instanceof Date) {
-    //         items[i][dateIndex] = Utilities.formatDate(items[i][dateIndex], Session.getScriptTimeZone(), 'yyyy-MM-dd');
-    //     } else {
-    //         items[i][dateIndex] = String(items[i][dateIndex]);
-    //     }
-    // }
     var priceCondition = {name:'折扣後金額'};
     var minPrice = categoryResorterB.getRange('B8').getValues();
     var maxPrice = categoryResorterB.getRange('D8').getValues();
     if(minPrice != '') priceCondition.minPrice = minPrice;
     if(maxPrice != '') priceCondition.maxPrice = maxPrice;
     var dateCondition = {name:'預計交期起算'};
-    var conditionDateTime = categoryResorterB.getRange('B7').getValues();
+    var conditionDateTime = categoryResorterB.getRange('B7').getDisplayValues();
     if(conditionDateTime != '') dateCondition.conditionDate = conditionDateTime;
     var params = {
         action: 'filter_data',
