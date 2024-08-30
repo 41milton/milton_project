@@ -385,48 +385,27 @@ function saveTempDataToSheetA() {
 
 
 function saveTempDataToSheetB() {
-    categoryResorterB.getRange('B16:B' + categoryResorterB.getLastRow()).removeCheckboxes(); 
-    const tempData = tempStorageB.getRange('A16:L').getValues();    
-    categoryResorterB.getRange('A3').setValue(tempStorageB.getRange('A3').getValue());
-    categoryResorterB.getRange('B3').setValue(tempStorageB.getRange('B3').getValue());    
-    categoryResorterB.getRange('A16:L').clearContent();
-    categoryResorterB.getRange(16, 1, tempData.length, tempData[0].length).setValues(tempData);
+    const categoryId = tempStorageB.getRange('A3').getValue();
+    const data = tempStorageB.getRange('A16:C' + tempStorageB.getLastRow()).getValues();
+    var updateData = data.filter(row => row[1] === true).map(row => ({
+        entity_id: row[2],
+        position: row[0]
+    }));
 
+    var params = {
+        action: 'update_category_product_position',
+        categoryId: categoryId,
+        updateData: updateData
+    };
+    const response = sendDataToCloudFunction(params);  
+    if(!response.success){
+        console.log(response.error);
+    } 
 
-    // 將負數的 cumulative_qty 列字體顏色設置為紅色
-    const cumulativeQtyRange = categoryResorterB.getRange(16, 7, tempData.length);
-    const cumulativeQtyValues = cumulativeQtyRange.getValues();
-    
-    for (let i = 0; i < tempData.length; i++) {
-        const cumulativeQty = parseFloat(cumulativeQtyValues[i][0]);
-        if (cumulativeQty < 0) {
-            cumulativeQtyRange.getCell(i + 1, 1).setFontColor('red');
-        } else {
-            cumulativeQtyRange.getCell(i + 1, 1).setFontColor('black');
-        }
+    if(response.message == '更新成功'){
+        SpreadsheetApp.getUi().alert('分類頁: '+ tempStorageB.getRange('A3').getValue() +' '+ tempStorageB.getRange('B3').getValue() +'\n已還原\n在 '+ tempStorageB.getRange('A1').getValue() +' 修改前的內容至M2後台');
     }
-
-    // 刪除最後一個非空行以下的所有行
-    const lastDataRow = categoryResorterB.getLastRow();
-    const lastRow = categoryResorterB.getMaxRows();
-    const deleteRowCount = lastRow - lastDataRow;
-    
-    if (deleteRowCount > 2) {
-        categoryResorterB.deleteRows(lastDataRow + 1, deleteRowCount - 2);
-    } else {
-        categoryResorterB.insertRowsAfter(lastDataRow, 2);
+    else{
+        SpreadsheetApp.getUi().alert(response.message);
     }
-
-
-
-    // 將 B 列的值設定為複選框
-    const checkboxRange = categoryResorterB.getRange(16, 2, tempData.length);
-    const checkboxRule = SpreadsheetApp.newDataValidation()
-        .requireCheckbox()
-        .build();
-    checkboxRange.setDataValidation(checkboxRule);
-
-
-
-    SpreadsheetApp.getUi().alert('已回復分類頁: '+ tempStorageB.getRange('A3').getValue() +' '+ tempStorageB.getRange('B3').getValue() +'\n在 '+ tempStorageB.getRange('A1').getValue() +'\n的查詢內容');
 }
