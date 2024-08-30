@@ -138,7 +138,7 @@ function updateCategoryProductPosition(){
 
 
 function getCategoryByAttributeAndId(){
-    categoryResorterB.getRange('B16:B'+ categoryResorterB.getLastRow()).removeCheckboxes(); 
+    categoryResorterB.getRange('B20:B'+ categoryResorterB.getLastRow()).removeCheckboxes(); 
     const categoryId = categoryResorterB.getRange('A3').getValue();
     const params = {
         action: 'get_category_product_by_attribute_and_id',
@@ -151,7 +151,7 @@ function getCategoryByAttributeAndId(){
     categoryResorterB.getRange('B3').setValue(response.categoryName[0].value);
 
     // list product
-    categoryResorterB.getRange('A16:L').clearContent();
+    categoryResorterB.getRange('A20:L').clearContent();
     const categoryProducts = response.categoryProducts;
     const numRows = categoryProducts.length;
     if (numRows > 0) {
@@ -181,12 +181,12 @@ function getCategoryByAttributeAndId(){
             ];
         });
 
-        // 將數據寫入 A16 到 L 列
-        categoryResorterB.getRange(16, 1, numRows, 12).setValues(data);
+        // 將數據寫入 A20 到 L 列
+        categoryResorterB.getRange(20, 1, numRows, 12).setValues(data);
 
 
         // 將 B 列的值設定為複選框
-        const checkboxRange = categoryResorterB.getRange(16, 2, numRows);
+        const checkboxRange = categoryResorterB.getRange(20, 2, numRows);
         const checkboxRule = SpreadsheetApp.newDataValidation()
             .requireCheckbox()
             .build();
@@ -194,7 +194,7 @@ function getCategoryByAttributeAndId(){
 
 
         // 將負數的 cumulative_qty 列字體顏色設置為紅色
-        const cumulativeQtyRange = categoryResorterB.getRange(16, 7, numRows);
+        const cumulativeQtyRange = categoryResorterB.getRange(20, 7, numRows);
         const cumulativeQtyValues = cumulativeQtyRange.getValues();
         for (let i = 0; i < numRows; i++) {
             const cumulativeQty = parseFloat(cumulativeQtyValues[i][0]);
@@ -223,7 +223,7 @@ function getCategoryByAttributeAndId(){
         tempStorageB.getRange(1 , 1, tempStorageB.getMaxRows(), tempStorageB.getMaxColumns()).clearContent();
         tempStorageB.getRange('B3').setValue(response.categoryName[0].value);
         tempStorageB.getRange('A3').setValue(categoryId);
-        tempStorageB.getRange(16, 1, numRows, 12).setValues(data);
+        tempStorageB.getRange(20, 1, numRows, 12).setValues(data);
         tempStorageB.getRange(1, 1).setValue(new Date().toLocaleString());
     }
     // SpreadsheetApp.getUi().alert('讀取完成');
@@ -268,7 +268,7 @@ function getCategoryDetailsById(categoryId) {
 
 function updateCategoryProductPositionWithBoolean(){
     const categoryId = categoryResorterB.getRange('A3').getValue();
-    const data = categoryResorterB.getRange('A16:C' + categoryResorterB.getLastRow()).getValues();
+    const data = categoryResorterB.getRange('A20:C' + categoryResorterB.getLastRow()).getValues();
     var updateData = data.filter(row => row[1] === true).map(row => ({
         entity_id: row[2],
         position: row[0]
@@ -289,8 +289,8 @@ function updateCategoryProductPositionWithBoolean(){
 
 
 function onFilter(){
-    var items = categoryResorterB.getRange('A16:L').getDisplayValues();
-    var [title] = categoryResorterB.getRange('A15:L15').getValues();
+    var items = categoryResorterB.getRange('A20:L').getDisplayValues();
+    var [title] = categoryResorterB.getRange('A19:L19').getValues();
     var priceCondition = {name:'折扣後金額'};
     var minPrice = categoryResorterB.getRange('B8').getValues();
     var maxPrice = categoryResorterB.getRange('D8').getValues();
@@ -314,15 +314,15 @@ function onFilter(){
 
     const data = sendDataToCloudFunction(params); 
     const numRows = data.length;
-    categoryResorterB.getRange('B16:B'+ categoryResorterB.getLastRow()).removeCheckboxes();
-    categoryResorterB.getRange('A16:L').clearContent();
+    categoryResorterB.getRange('B20:B'+ categoryResorterB.getLastRow()).removeCheckboxes();
+    categoryResorterB.getRange('A20:L').clearContent();
 
-    // 將數據寫入 A16 到 L 列
-    categoryResorterB.getRange(16, 1, numRows, 12).setValues(data);
+    // 將數據寫入 A20 到 L 列
+    categoryResorterB.getRange(20, 1, numRows, 12).setValues(data);
 
 
     // 將 B 列的值設定為複選框
-    const checkboxRange = categoryResorterB.getRange(16, 2, numRows);
+    const checkboxRange = categoryResorterB.getRange(20, 2, numRows);
     const checkboxRule = SpreadsheetApp.newDataValidation()
         .requireCheckbox()
         .build();
@@ -330,7 +330,7 @@ function onFilter(){
 
 
     // 將負數的 cumulative_qty 列字體顏色設置為紅色
-    const cumulativeQtyRange = categoryResorterB.getRange(16, 7, numRows);
+    const cumulativeQtyRange = categoryResorterB.getRange(20, 7, numRows);
     const cumulativeQtyValues = cumulativeQtyRange.getValues();
     for (let i = 0; i < numRows; i++) {
         const cumulativeQty = parseFloat(cumulativeQtyValues[i][0]);
@@ -386,7 +386,7 @@ function saveTempDataToSheetA() {
 
 function saveTempDataToSheetB() {
     const categoryId = tempStorageB.getRange('A3').getValue();
-    const data = tempStorageB.getRange('A16:C' + tempStorageB.getLastRow()).getValues();
+    const data = tempStorageB.getRange('A20:C' + tempStorageB.getLastRow()).getValues();
     var updateData = data.filter(row => row[1] === true).map(row => ({
         entity_id: row[2],
         position: row[0]
