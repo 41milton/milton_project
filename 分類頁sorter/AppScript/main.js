@@ -56,7 +56,7 @@ function getCategoryById(){
             const datesString = dates.join('\n');
             const purchaseQtyList = JSON.parse(product.mrl_sap_purchase_qty || '[]');
             const purchaseQtyFormatted = purchaseQtyList.map(item => {
-                return `${item.purchaseQty}(於${item.remainder})`;
+                return `${item.purchaseQty}(餘${item.remainder})`;
             }).join('\n');
             const visibilityText = visibilityMap[product.visibility] || 'Unknown';
             return [
@@ -160,7 +160,7 @@ function getCategoryByAttributeAndId(){
             const datesString = dates.join('\n');
             const purchaseQtyList = JSON.parse(product.mrl_sap_purchase_qty || '[]');
             const purchaseQtyFormatted = purchaseQtyList.map(item => {
-                return `${item.purchaseQty}(於${item.remainder})`;
+                return `${item.purchaseQty}(餘${item.remainder})`;
             }).join('\n');
             const visibilityText = visibilityMap[product.visibility] || 'Unknown';
             const isPositionNumber = !isNaN(parseFloat(product.position)) && isFinite(product.position);
