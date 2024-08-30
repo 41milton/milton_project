@@ -184,7 +184,10 @@ async function getCategoryProductsByAttributeAndId(attributes,categoryId) {
             (${attributeConditions})
             
         GROUP BY
-            cpe.entity_id, cpe.sku, ccp.position; 
+            cpe.entity_id, cpe.sku, ccp.position
+        ORDER BY 
+            CASE WHEN ccp.position IS NULL THEN 1 ELSE 0 END,
+            ccp.position ASC;
 
     `;
 
@@ -275,7 +278,9 @@ async function getCategoryProductsById(categoryId) {
         WHERE
             ccp.category_id = ${categoryId}
         GROUP BY
-            ccp.product_id, cpe.sku;
+            ccp.product_id, cpe.sku
+        ORDER BY
+            ccp.position ASC;
 
     `;
     return executeQuery(query);
