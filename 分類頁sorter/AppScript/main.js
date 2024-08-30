@@ -358,36 +358,29 @@ function onFilter(){
 
 
 function saveTempDataToSheetA() {
-    const tempData = tempStorageA.getRange('A8:J').getValues();
-    categoryResorterA.getRange('A3').setValue(tempStorageA.getRange('A3').getValue());
-    categoryResorterA.getRange('B3').setValue(tempStorageA.getRange('B3').getValue());
-    categoryResorterA.getRange('A8:J').clearContent();
-    categoryResorterA.getRange(8, 1, tempData.length, tempData[0].length).setValues(tempData);
+    const categoryId = tempStorageA.getRange('A3').getValue();
+    const data = tempStorageA.getRange('A8:B' + tempStorageA.getLastRow()).getValues();
+    var updateData = data.map(row => ({
+        entity_id: row[1],
+        position: row[0]
+      }));
 
-    // 將負數的 cumulative_qty 列字體顏色設置為紅色
-    const cumulativeQtyRange = categoryResorterA.getRange(8, 6, tempData.length);
-    const cumulativeQtyValues = cumulativeQtyRange.getValues();
-    
-    for (let i = 0; i < tempData.length; i++) {
-        const cumulativeQty = parseFloat(cumulativeQtyValues[i][0]);
-        if (cumulativeQty < 0) {
-            cumulativeQtyRange.getCell(i + 1, 1).setFontColor('red');
-        } else {
-            cumulativeQtyRange.getCell(i + 1, 1).setFontColor('black');
-        }
-    }
+    var params = {
+        action: 'update_category_product_position',
+        categoryId: categoryId,
+        updateData: updateData
+    };
+    const response = sendDataToCloudFunction(params);  
+    if(!response.success){
+        console.log(response.error);
+    } 
 
-    // 刪除最後一個非空行以下的所有行
-    const lastDataRow = categoryResorterA.getLastRow();
-    const lastRow = categoryResorterA.getMaxRows();
-    const deleteRowCount = lastRow - lastDataRow;
-    
-    if (deleteRowCount > 2) {
-        categoryResorterA.deleteRows(lastDataRow + 1, deleteRowCount - 2);
-    } else {
-        categoryResorterA.insertRowsAfter(lastDataRow, 2);
+    if(response.message == '更新成功'){
+        SpreadsheetApp.getUi().alert('分類頁: '+ tempStorageA.getRange('A3').getValue() +' '+ tempStorageA.getRange('B3').getValue() +'\n已還原\n在 '+ tempStorageA.getRange('A1').getValue() +' 修改前的內容至M2後台');
     }
-    SpreadsheetApp.getUi().alert('已回復分類頁: '+ tempStorageA.getRange('A3').getValue() +' '+ tempStorageA.getRange('B3').getValue() +'\n在 '+ tempStorageA.getRange('A1').getValue() +'\n的查詢內容');
+    else{
+        SpreadsheetApp.getUi().alert(response.message);
+    }
 }
 
 
