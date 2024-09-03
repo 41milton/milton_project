@@ -138,6 +138,7 @@ function updateCategoryProductPosition(){
 
 
 function getCategoryByAttributeAndId(){
+    deleteTempSheets();
     categoryResorterB.getRange('B20:B'+ categoryResorterB.getLastRow()).removeCheckboxes(); 
     const categoryId = categoryResorterB.getRange('A3').getValue();
     const params = {
@@ -288,7 +289,31 @@ function updateCategoryProductPositionWithBoolean(){
 
 
 
+
+//filter相關
 function onFilter(){
+    
+    //進行暫存    
+    const currentSheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    const categoryResorterBData = categoryResorterB.getRange('A20:L' + categoryResorterB.getLastRow()).getValues();
+    const filterCount = getTempSheetCount('filter_temp_');
+    const filterTempName = 'filter_temp_' + (filterCount + 1);
+    SpreadsheetApp.getActiveSpreadsheet().insertSheet(filterTempName);
+    SpreadsheetApp.getActiveSpreadsheet().setActiveSheet(currentSheet);
+    const filterTempTable = spread.getSheetByName(filterTempName);
+    
+    //temp塞入值
+    filterTempTable.getRange(20, 1, categoryResorterBData.length, 12).setValues(categoryResorterBData);
+
+    //temp將空白刪除
+    const filterLastDataRow = filterTempTable.getLastRow();
+    const filterLastRow = filterTempTable.getMaxRows();
+    let filterDeleteRow = filterLastRow - filterLastDataRow;
+    if(filterDeleteRow > 2){
+        filterTempTable.deleteRows(filterLastDataRow + 1, filterDeleteRow - 2);
+    }
+    
+
     var items = categoryResorterB.getRange('A20:L').getDisplayValues();
     var [title] = categoryResorterB.getRange('A19:L19').getValues();
     var priceCondition = {name:'折扣後金額'};
@@ -313,6 +338,28 @@ function onFilter(){
 
 
     const data = sendDataToCloudFunction(params); 
+    updateSheetBData(data);
+}
+
+
+function revertFilter(){
+    const filterTempCount = getTempSheetCount('filter_temp_');
+    if(filterTempCount > 0){
+        const filterTempName = 'filter_temp_' + filterTempCount;
+        const filterTempTable = spread.getSheetByName(filterTempName);
+        categoryResorterB.getRange('B20:B' + categoryResorterB.getLastRow()).removeCheckboxes(); 
+    
+        const tempData = filterTempTable.getRange('A20:L' + filterTempTable.getLastRow()).getValues();    
+        updateSheetBData(tempData);
+        SpreadsheetApp.getActiveSpreadsheet().deleteSheet(filterTempTable);
+    }
+    else{
+        SpreadsheetApp.getUi().alert('無資料可還原');
+    }
+}
+
+
+function updateSheetBData(data){
     const numRows = data.length;
     categoryResorterB.getRange('B20:B'+ categoryResorterB.getLastRow()).removeCheckboxes();
     categoryResorterB.getRange('A20:L').clearContent();
@@ -408,4 +455,37 @@ function saveTempDataToSheetB() {
     else{
         SpreadsheetApp.getUi().alert(response.message);
     }
+}
+
+
+
+function deleteTempSheets() {
+    var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    var sheets = spreadsheet.getSheets();
+    var prefix = 'filter_temp_';
+
+    for (var i = sheets.length - 1; i >= 0; i--) {
+        var sheet = sheets[i];
+        var sheetName = sheet.getName();
+        
+        // 檢查工作表名稱是否以 "filter_temp_" 開頭
+        if (sheetName.startsWith(prefix)) {
+            spreadsheet.deleteSheet(sheet);
+        }
+    }
+}
+
+
+function getTempSheetCount(tempTableName) {
+    var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    var sheets = spreadsheet.getSheets();    
+    var count = 0;
+    for (var i = 0; i < sheets.length; i++) {
+        var sheetName = sheets[i].getName();
+        if (sheetName.startsWith(tempTableName)) {
+            count++;
+        }
+    }
+    
+    return count;
 }
