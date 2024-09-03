@@ -119,6 +119,16 @@ function getCategoryById(){
 function updateCategoryProductPosition(){
     const categoryId = categoryResorterA.getRange('A3').getValue();
     const data = categoryResorterA.getRange('A8:B' + categoryResorterA.getLastRow()).getValues();
+    
+    
+    // 檢查是否有任何行的第一項不是數字
+    const hasNonNumber = data.some(row => typeof row[0] !== 'number' || isNaN(row[0]));
+    if (hasNonNumber) {
+        SpreadsheetApp.getUi().alert('錯誤！請檢查 A欄『排序』數值，須為半形數字、不可為空值');
+        return;
+    }
+
+
     var updateData = data.map(row => ({
         entity_id: row[1],
         position: row[0]
@@ -270,6 +280,15 @@ function getCategoryDetailsById(categoryId) {
 function updateCategoryProductPositionWithBoolean(){
     const categoryId = categoryResorterB.getRange('A3').getValue();
     const data = categoryResorterB.getRange('A20:C' + categoryResorterB.getLastRow()).getValues();
+
+    // 檢查是否有任何行的第一項不是數字
+    const hasNonNumber = data.some(row => typeof row[0] !== 'number' || isNaN(row[0]));
+    if (hasNonNumber) {
+        SpreadsheetApp.getUi().alert('錯誤！請檢查 A欄『排序』數值，須為半形數字、不可為空值');
+        return;
+    }
+
+    
     var updateData = data.filter(row => row[1] === true).map(row => ({
         entity_id: row[2],
         position: row[0]
