@@ -402,6 +402,74 @@ function updateSheetBData(data){
 }
 
 
+//預覽相關
+function preview(){
+    const previewTableCount = getTempSheetCount('preview_temp');
+    if(previewTableCount == 0){
+        const categoryResorterBData = categoryResorterB.getRange('A20:L' + categoryResorterB.getLastRow()).getValues();
+        const filteredData = categoryResorterBData.filter(item => item[1] === true);
+        filteredData.sort((a, b) => {
+            if (typeof a[0] === 'number' && typeof b[0] === 'number') {
+              return a[0] - b[0];
+            } else if (typeof a[0] === 'number') {
+              return -1; // 如果 a 是數字而 b 不是數字，a 排在前面
+            } else if (typeof b[0] === 'number') {
+              return 1;  // 如果 b 是數字而 a 不是數字，b 排在前面
+            } else {
+              return 0;  // 如果 a 和 b 都不是數字，保持原有順序
+            }
+        });
+        updateSheetBData(filteredData);
+        const notNum = [];
+        filteredData.forEach(item => {
+        if (typeof item[0] !== 'number') {
+            notNum.push(item[2]);
+        }
+        });
+        if(notNum.length > 0){
+            SpreadsheetApp.getUi().alert('注意!\nentity_id: ' + notNum.join(', ') + ' \n的A欄『排序』數值，須為半形數字、不可為空值');
+        }
+
+
+
+        //進行暫存    
+        const currentSheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+        SpreadsheetApp.getActiveSpreadsheet().insertSheet('preview_temp');
+        SpreadsheetApp.getActiveSpreadsheet().setActiveSheet(currentSheet);
+        const previewTempTable = spread.getSheetByName('preview_temp');
+        
+        //temp塞入值
+        previewTempTable.getRange(20, 1, categoryResorterBData.length, 12).setValues(categoryResorterBData);
+
+        //temp將空白刪除
+        const previewLastDataRow = previewTempTable.getLastRow();
+        const previewLastRow = previewTempTable.getMaxRows();
+        let previewDeleteRow = previewLastRow - previewLastDataRow;
+        if(previewDeleteRow > 2){
+            previewTempTable.deleteRows(previewLastDataRow + 1, previewDeleteRow - 2);
+        }
+
+    }
+    else{
+        SpreadsheetApp.getUi().alert('已在預覽修改畫面中');
+    }
+}
+
+
+function revertPreview(){
+    if(getTempSheetCount('preview_temp') == 0){
+        SpreadsheetApp.getUi().alert('無預覽資料');
+    }
+    else if(getTempSheetCount('preview_temp') == 1){
+        const previewTempTable = spread.getSheetByName('preview_temp');
+        categoryResorterB.getRange('B20:B' + categoryResorterB.getLastRow()).removeCheckboxes(); 
+    
+        const tempData = previewTempTable.getRange('A20:L' + previewTempTable.getLastRow()).getValues();    
+        updateSheetBData(tempData);
+        SpreadsheetApp.getActiveSpreadsheet().deleteSheet(previewTempTable);
+    }
+}
+
 
 
 function saveTempDataToSheetA() {
@@ -472,6 +540,11 @@ function deleteTempSheets() {
         if (sheetName.startsWith(prefix)) {
             spreadsheet.deleteSheet(sheet);
         }
+    }
+
+    if(getTempSheetCount('preview_temp') > 0){
+        const previewTempTable = spread.getSheetByName('preview_temp');
+        SpreadsheetApp.getActiveSpreadsheet().deleteSheet(previewTempTable);
     }
 }
 
