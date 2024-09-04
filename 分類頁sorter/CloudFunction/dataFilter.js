@@ -104,7 +104,7 @@ function filterPriceData(items,condition,indexList){
  */
 function extractStockNumbers(stockStr) {
     return stockStr.split('\n').map(item => {
-        const match = item.match(/於(\d+)/);
+        const match = item.match(/餘(\d+)/);
         return match ? parseInt(match[1], 10) : 0; // 默認為 0 如果無法匹配
     });
 }
