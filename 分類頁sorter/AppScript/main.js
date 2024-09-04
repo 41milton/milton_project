@@ -427,14 +427,14 @@ function preview(){
         const categoryResorterBData = categoryResorterB.getRange('A20:L' + categoryResorterB.getLastRow()).getValues();
         const filteredData = categoryResorterBData.filter(item => item[1] === true);
         filteredData.sort((a, b) => {
-            if (typeof a[0] === 'number' && typeof b[0] === 'number') {
-              return a[0] - b[0];
-            } else if (typeof a[0] === 'number') {
-              return -1; // 如果 a 是數字而 b 不是數字，a 排在前面
-            } else if (typeof b[0] === 'number') {
-              return 1;  // 如果 b 是數字而 a 不是數字，b 排在前面
+            if (typeof a[0] !== 'number' && typeof b[0] !== 'number') {
+                return 0;  // 如果 a 和 b 都不是數字，保持原有順序
+            } else if (typeof a[0] !== 'number') {
+                return -1; // 如果 a 不是數字而 b 是數字，a 排在前面
+            } else if (typeof b[0] !== 'number') {
+                return 1;  // 如果 b 不是數字而 a 是數字，b 排在前面
             } else {
-              return 0;  // 如果 a 和 b 都不是數字，保持原有順序
+                return a[0] - b[0]; // 如果 a 和 b 都是數字，按照數字大小排序
             }
         });
         updateSheetBData(filteredData);
