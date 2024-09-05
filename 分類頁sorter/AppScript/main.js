@@ -37,11 +37,28 @@ function sendDataToCloudFunction(params) {
 
 function getCategoryById(){
     const categoryId = categoryResorterA.getRange('B4').getValue();
+
+
+    //檢查categoryId格式
+    if(typeof categoryId !== 'number' || isNaN(categoryId)){
+        SpreadsheetApp.getUi().alert('錯誤！請檢查 分類頁ID 數值，須為半形數字、不可為空值');
+        return;
+    }
+
+
     const params = {
         action: 'get_category_product_by_id',
         categoryId: categoryId
     };
     const response = sendDataToCloudFunction(params);
+
+
+    //檢查分類頁是否存在
+    if(!(response.categoryName && response.categoryName[0] && response.categoryName[0].value)){
+        SpreadsheetApp.getUi().alert('錯誤！查無此分類頁ID，請重新確認');
+        return;
+    }
+
 
     // 寫分類頁名稱
     categoryResorterA.getRange('A4').setValue(response.categoryName[0].value);
@@ -148,14 +165,33 @@ function updateCategoryProductPosition(){
 
 function getCategoryByAttributeAndId(){
     deleteTempSheets();
-    categoryResorterB.getRange('B21:B'+ categoryResorterB.getLastRow()).removeCheckboxes(); 
     const categoryId = categoryResorterB.getRange('B4').getValue();
+
+    
+    //檢查categoryId格式
+    if(typeof categoryId !== 'number' || isNaN(categoryId)){
+        SpreadsheetApp.getUi().alert('錯誤！請檢查 分類頁ID 數值，須為半形數字、不可為空值');
+        return;
+    }
+
+
     const params = {
         action: 'get_category_product_by_attribute_and_id',
         categoryId: categoryId,
         attribute: getCategoryDetailsById(categoryId)
     };
     const response = sendDataToCloudFunction(params);
+
+    
+    //檢查分類頁是否存在
+    if(!(response.categoryName && response.categoryName[0] && response.categoryName[0].value)){
+        SpreadsheetApp.getUi().alert('錯誤！查無此分類頁ID，請重新確認');
+        return;
+    }
+
+    
+    categoryResorterB.getRange('B21:B'+ categoryResorterB.getLastRow()).removeCheckboxes(); 
+
 
     // 寫分類頁名稱
     categoryResorterB.getRange('A4').setValue(response.categoryName[0].value);
