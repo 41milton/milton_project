@@ -36,7 +36,7 @@ function sendDataToCloudFunction(params) {
 
 
 function getCategoryById(){
-    const categoryId = categoryResorterA.getRange('A3').getValue();
+    const categoryId = categoryResorterA.getRange('B4').getValue();
     const params = {
         action: 'get_category_product_by_id',
         categoryId: categoryId
@@ -44,10 +44,10 @@ function getCategoryById(){
     const response = sendDataToCloudFunction(params);
 
     // 寫分類頁名稱
-    categoryResorterA.getRange('B3').setValue(response.categoryName[0].value);
+    categoryResorterA.getRange('A4').setValue(response.categoryName[0].value);
 
     // list product
-    categoryResorterA.getRange('A8:J').clearContent();
+    categoryResorterA.getRange('A9:J').clearContent();
     const categoryProducts = response.categoryProducts;
     const numRows = categoryProducts.length;
     if (numRows > 0) {
@@ -73,12 +73,12 @@ function getCategoryById(){
             ];
         });
 
-        // 將數據寫入 A8 到 J 列
-        categoryResorterA.getRange(8, 1, numRows, 10).setValues(data);
+        // 將數據寫入 A9 到 J 列
+        categoryResorterA.getRange(9, 1, numRows, 10).setValues(data);
 
 
         // 將負數的 cumulative_qty 列字體顏色設置為紅色
-        const cumulativeQtyRange = categoryResorterA.getRange(8, 6, numRows);
+        const cumulativeQtyRange = categoryResorterA.getRange(9, 6, numRows);
         const cumulativeQtyValues = cumulativeQtyRange.getValues();
         for (let i = 0; i < numRows; i++) {
             const cumulativeQty = parseFloat(cumulativeQtyValues[i][0]);
@@ -104,9 +104,9 @@ function getCategoryById(){
         //寫進storage
         tempStorageA.deleteRows(4, tempStorageA.getMaxRows() - 3);
         tempStorageA.getRange(1 , 1, tempStorageA.getMaxRows(), tempStorageA.getMaxColumns()).clearContent();
-        tempStorageA.getRange('B3').setValue(response.categoryName[0].value);
-        tempStorageA.getRange('A3').setValue(categoryId);
-        tempStorageA.getRange(8, 1, numRows, 10).setValues(data);
+        tempStorageA.getRange('A4').setValue(response.categoryName[0].value);
+        tempStorageA.getRange('B4').setValue(categoryId);
+        tempStorageA.getRange(9, 1, numRows, 10).setValues(data);
         tempStorageA.getRange(1, 1).setValue(new Date().toLocaleString());
     }
     // SpreadsheetApp.getUi().alert('讀取完成');
@@ -117,8 +117,8 @@ function getCategoryById(){
 
 
 function updateCategoryProductPosition(){
-    const categoryId = categoryResorterA.getRange('A3').getValue();
-    const data = categoryResorterA.getRange('A8:B' + categoryResorterA.getLastRow()).getValues();
+    const categoryId = categoryResorterA.getRange('B4').getValue();
+    const data = categoryResorterA.getRange('A9:B' + categoryResorterA.getLastRow()).getValues();
     var updateData = data.map(row => ({
         entity_id: row[1],
         position: row[0]
@@ -148,8 +148,8 @@ function updateCategoryProductPosition(){
 
 function getCategoryByAttributeAndId(){
     deleteTempSheets();
-    categoryResorterB.getRange('B20:B'+ categoryResorterB.getLastRow()).removeCheckboxes(); 
-    const categoryId = categoryResorterB.getRange('A3').getValue();
+    categoryResorterB.getRange('B21:B'+ categoryResorterB.getLastRow()).removeCheckboxes(); 
+    const categoryId = categoryResorterB.getRange('B4').getValue();
     const params = {
         action: 'get_category_product_by_attribute_and_id',
         categoryId: categoryId,
@@ -158,10 +158,10 @@ function getCategoryByAttributeAndId(){
     const response = sendDataToCloudFunction(params);
 
     // 寫分類頁名稱
-    categoryResorterB.getRange('B3').setValue(response.categoryName[0].value);
+    categoryResorterB.getRange('A4').setValue(response.categoryName[0].value);
 
     // list product
-    categoryResorterB.getRange('A20:L').clearContent();
+    categoryResorterB.getRange('A21:L').clearContent();
     const categoryProducts = response.categoryProducts;
     const numRows = categoryProducts.length;
     if (numRows > 0) {
@@ -191,12 +191,12 @@ function getCategoryByAttributeAndId(){
             ];
         });
 
-        // 將數據寫入 A20 到 L 列
-        categoryResorterB.getRange(20, 1, numRows, 12).setValues(data);
+        // 將數據寫入 A21 到 L 列
+        categoryResorterB.getRange(21, 1, numRows, 12).setValues(data);
 
 
         // 將 B 列的值設定為複選框
-        const checkboxRange = categoryResorterB.getRange(20, 2, numRows);
+        const checkboxRange = categoryResorterB.getRange(21, 2, numRows);
         const checkboxRule = SpreadsheetApp.newDataValidation()
             .requireCheckbox()
             .build();
@@ -204,7 +204,7 @@ function getCategoryByAttributeAndId(){
 
 
         // 將負數的 cumulative_qty 列字體顏色設置為紅色
-        const cumulativeQtyRange = categoryResorterB.getRange(20, 7, numRows);
+        const cumulativeQtyRange = categoryResorterB.getRange(21, 7, numRows);
         const cumulativeQtyValues = cumulativeQtyRange.getValues();
         for (let i = 0; i < numRows; i++) {
             const cumulativeQty = parseFloat(cumulativeQtyValues[i][0]);
@@ -231,9 +231,9 @@ function getCategoryByAttributeAndId(){
         //寫進storage
         tempStorageB.deleteRows(4, tempStorageB.getMaxRows() - 3);
         tempStorageB.getRange(1 , 1, tempStorageB.getMaxRows(), tempStorageB.getMaxColumns()).clearContent();
-        tempStorageB.getRange('B3').setValue(response.categoryName[0].value);
-        tempStorageB.getRange('A3').setValue(categoryId);
-        tempStorageB.getRange(20, 1, numRows, 12).setValues(data);
+        tempStorageB.getRange('A4').setValue(response.categoryName[0].value);
+        tempStorageB.getRange('B4').setValue(categoryId);
+        tempStorageB.getRange(21, 1, numRows, 12).setValues(data);
         tempStorageB.getRange(1, 1).setValue(new Date().toLocaleString());
     }
     // SpreadsheetApp.getUi().alert('讀取完成');
@@ -277,8 +277,8 @@ function getCategoryDetailsById(categoryId) {
 
 
 function updateCategoryProductPositionWithBoolean(){
-    const categoryId = categoryResorterB.getRange('A3').getValue();
-    const data = categoryResorterB.getRange('A20:C' + categoryResorterB.getLastRow()).getValues();
+    const categoryId = categoryResorterB.getRange('B4').getValue();
+    const data = categoryResorterB.getRange('A21:C' + categoryResorterB.getLastRow()).getValues();
     var updateData = data.filter(row => row[1] === true).map(row => ({
         entity_id: row[2],
         position: row[0]
@@ -313,7 +313,7 @@ function onFilter(){
     
     //進行暫存    
     const currentSheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    const categoryResorterBData = categoryResorterB.getRange('A20:L' + categoryResorterB.getLastRow()).getValues();
+    const categoryResorterBData = categoryResorterB.getRange('A21:L' + categoryResorterB.getLastRow()).getValues();
     const filterCount = getTempSheetCount('filter_temp_');
     const filterTempName = 'filter_temp_' + (filterCount + 1);
     SpreadsheetApp.getActiveSpreadsheet().insertSheet(filterTempName);
@@ -321,7 +321,7 @@ function onFilter(){
     const filterTempTable = spread.getSheetByName(filterTempName);
     
     //temp塞入值
-    filterTempTable.getRange(20, 1, categoryResorterBData.length, 12).setValues(categoryResorterBData);
+    filterTempTable.getRange(21, 1, categoryResorterBData.length, 12).setValues(categoryResorterBData);
 
     //temp將空白刪除
     const filterLastDataRow = filterTempTable.getLastRow();
@@ -332,15 +332,15 @@ function onFilter(){
     }
     
 
-    var items = categoryResorterB.getRange('A20:L').getDisplayValues();
-    var [title] = categoryResorterB.getRange('A19:L19').getValues();
+    var items = categoryResorterB.getRange('A21:L').getDisplayValues();
+    var [title] = categoryResorterB.getRange('A20:L20').getValues();
     var priceCondition = {name:'折扣後金額'};
-    var minPrice = categoryResorterB.getRange('B8').getValues();
-    var maxPrice = categoryResorterB.getRange('D8').getValues();
+    var minPrice = categoryResorterB.getRange('B9').getValues();
+    var maxPrice = categoryResorterB.getRange('D9').getValues();
     if(minPrice != '') priceCondition.minPrice = minPrice;
     if(maxPrice != '') priceCondition.maxPrice = maxPrice;
     var dateCondition = {name:'預計交期起算'};
-    var conditionDateTime = categoryResorterB.getRange('B7').getDisplayValues();
+    var conditionDateTime = categoryResorterB.getRange('B8').getDisplayValues();
     if(conditionDateTime != '') dateCondition.conditionDate = conditionDateTime;
     var params = {
         action: 'filter_data',
@@ -365,9 +365,9 @@ function revertFilter(){
     if(filterTempCount > 0){
         const filterTempName = 'filter_temp_' + filterTempCount;
         const filterTempTable = spread.getSheetByName(filterTempName);
-        categoryResorterB.getRange('B20:B' + categoryResorterB.getLastRow()).removeCheckboxes(); 
+        categoryResorterB.getRange('B21:B' + categoryResorterB.getLastRow()).removeCheckboxes(); 
     
-        const tempData = filterTempTable.getRange('A20:L' + filterTempTable.getLastRow()).getValues();    
+        const tempData = filterTempTable.getRange('A21:L' + filterTempTable.getLastRow()).getValues();    
         updateSheetBData(tempData);
         SpreadsheetApp.getActiveSpreadsheet().deleteSheet(filterTempTable);
     }
@@ -379,15 +379,15 @@ function revertFilter(){
 
 function updateSheetBData(data){
     const numRows = data.length;
-    categoryResorterB.getRange('B20:B'+ categoryResorterB.getLastRow()).removeCheckboxes();
-    categoryResorterB.getRange('A20:L').clearContent();
+    categoryResorterB.getRange('B21:B'+ categoryResorterB.getLastRow()).removeCheckboxes();
+    categoryResorterB.getRange('A21:L').clearContent();
 
-    // 將數據寫入 A20 到 L 列
-    categoryResorterB.getRange(20, 1, numRows, 12).setValues(data);
+    // 將數據寫入 A21 到 L 列
+    categoryResorterB.getRange(21, 1, numRows, 12).setValues(data);
 
 
     // 將 B 列的值設定為複選框
-    const checkboxRange = categoryResorterB.getRange(20, 2, numRows);
+    const checkboxRange = categoryResorterB.getRange(21, 2, numRows);
     const checkboxRule = SpreadsheetApp.newDataValidation()
         .requireCheckbox()
         .build();
@@ -395,7 +395,7 @@ function updateSheetBData(data){
 
 
     // 將負數的 cumulative_qty 列字體顏色設置為紅色
-    const cumulativeQtyRange = categoryResorterB.getRange(20, 7, numRows);
+    const cumulativeQtyRange = categoryResorterB.getRange(21, 7, numRows);
     const cumulativeQtyValues = cumulativeQtyRange.getValues();
     for (let i = 0; i < numRows; i++) {
         const cumulativeQty = parseFloat(cumulativeQtyValues[i][0]);
@@ -424,7 +424,7 @@ function updateSheetBData(data){
 function preview(){
     const previewTableCount = getTempSheetCount('preview_temp');
     if(previewTableCount == 0){
-        const categoryResorterBData = categoryResorterB.getRange('A20:L' + categoryResorterB.getLastRow()).getValues();
+        const categoryResorterBData = categoryResorterB.getRange('A21:L' + categoryResorterB.getLastRow()).getValues();
         const filteredData = categoryResorterBData.filter(item => item[1] === true);
         filteredData.sort((a, b) => {
             if (typeof a[0] !== 'number' && typeof b[0] !== 'number') {
@@ -457,7 +457,7 @@ function preview(){
         const previewTempTable = spread.getSheetByName('preview_temp');
         
         //temp塞入值
-        previewTempTable.getRange(20, 1, categoryResorterBData.length, 12).setValues(categoryResorterBData);
+        previewTempTable.getRange(21, 1, categoryResorterBData.length, 12).setValues(categoryResorterBData);
 
         //temp將空白刪除
         const previewLastDataRow = previewTempTable.getLastRow();
@@ -480,9 +480,9 @@ function revertPreview(){
     }
     else if(getTempSheetCount('preview_temp') == 1){
         const previewTempTable = spread.getSheetByName('preview_temp');
-        categoryResorterB.getRange('B20:B' + categoryResorterB.getLastRow()).removeCheckboxes(); 
+        categoryResorterB.getRange('B21:B' + categoryResorterB.getLastRow()).removeCheckboxes(); 
     
-        const tempData = previewTempTable.getRange('A20:L' + previewTempTable.getLastRow()).getValues();    
+        const tempData = previewTempTable.getRange('A21:L' + previewTempTable.getLastRow()).getValues();    
         updateSheetBData(tempData);
         SpreadsheetApp.getActiveSpreadsheet().deleteSheet(previewTempTable);
     }
@@ -491,8 +491,8 @@ function revertPreview(){
 
 
 function saveTempDataToSheetA() {
-    const categoryId = tempStorageA.getRange('A3').getValue();
-    const data = tempStorageA.getRange('A8:B' + tempStorageA.getLastRow()).getValues();
+    const categoryId = tempStorageA.getRange('B4').getValue();
+    const data = tempStorageA.getRange('A9:B' + tempStorageA.getLastRow()).getValues();
     var updateData = data.map(row => ({
         entity_id: row[1],
         position: row[0]
@@ -509,7 +509,7 @@ function saveTempDataToSheetA() {
     } 
 
     if(response.message == '更新成功'){
-        SpreadsheetApp.getUi().alert('分類頁: '+ tempStorageA.getRange('A3').getValue() +' '+ tempStorageA.getRange('B3').getValue() +'\n已還原\n在 '+ tempStorageA.getRange('A1').getValue() +' 修改前的內容至M2後台');
+        SpreadsheetApp.getUi().alert('分類頁: '+ tempStorageA.getRange('B4').getValue() +' '+ tempStorageA.getRange('A4').getValue() +'\n已還原\n在 '+ tempStorageA.getRange('A1').getValue() +' 修改前的內容至M2後台');
     }
     else{
         SpreadsheetApp.getUi().alert(response.message);
@@ -518,8 +518,8 @@ function saveTempDataToSheetA() {
 
 
 function saveTempDataToSheetB() {
-    const categoryId = tempStorageB.getRange('A3').getValue();
-    const data = tempStorageB.getRange('A20:C' + tempStorageB.getLastRow()).getValues();
+    const categoryId = tempStorageB.getRange('B4').getValue();
+    const data = tempStorageB.getRange('A21:C' + tempStorageB.getLastRow()).getValues();
     var updateData = data.filter(row => row[1] === true).map(row => ({
         entity_id: row[2],
         position: row[0]
@@ -536,7 +536,7 @@ function saveTempDataToSheetB() {
     } 
 
     if(response.message == '更新成功'){
-        SpreadsheetApp.getUi().alert('分類頁: '+ tempStorageB.getRange('A3').getValue() +' '+ tempStorageB.getRange('B3').getValue() +'\n已還原\n在 '+ tempStorageB.getRange('A1').getValue() +' 修改前的內容至M2後台');
+        SpreadsheetApp.getUi().alert('分類頁: '+ tempStorageB.getRange('B4').getValue() +' '+ tempStorageB.getRange('A4').getValue() +'\n已還原\n在 '+ tempStorageB.getRange('A1').getValue() +' 修改前的內容至M2後台');
     }
     else{
         SpreadsheetApp.getUi().alert(response.message);
